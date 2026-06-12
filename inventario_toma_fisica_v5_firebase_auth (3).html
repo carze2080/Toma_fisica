@@ -1,0 +1,2371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Toma Física de Inventario v2</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+<style>
+/* ── TOKENS ── */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f5f5f4;--bg3:#f0efed;
+  --text:#1a1a18;--text2:#6b6b67;--text3:#9a9a96;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+  --green:#1D9E75;--green-dark:#0F6E56;--green-light:#EAF3DE;--green-text:#27500A;
+  --blue-light:#E6F1FB;--blue-text:#0C447C;
+  --amber-light:#FAEEDA;--amber-text:#633806;
+  --purple-light:#F0EAFF;--purple-text:#4A1D96;
+  --danger:#A32D2D;--danger-bg:#FCEBEB;--danger-border:#F09595;
+  --radius:8px;--radius-lg:12px;
+  --font:'Inter',system-ui,sans-serif;--mono:'Fira Mono','Courier New',monospace;
+  --shadow:0 2px 12px rgba(0,0,0,0.07);
+}
+[data-theme="dark"]{
+  --bg:#1e1e1c;--bg2:#2a2a27;--bg3:#232320;
+  --text:#e8e8e4;--text2:#a0a09a;--text3:#6b6b65;
+  --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.2);
+  --green-light:#085041;--green-text:#9FE1CB;
+  --blue-light:#0C447C;--blue-text:#B5D4F4;
+  --amber-light:#633806;--amber-text:#FAC775;
+  --purple-light:#2D1B69;--purple-text:#C4B5FD;
+  --danger-bg:#501313;--danger-border:#A32D2D;
+  --shadow:0 2px 12px rgba(0,0,0,0.3);
+}
+@media(prefers-color-scheme:dark){
+  [data-theme="auto"]{
+    --bg:#1e1e1c;--bg2:#2a2a27;--bg3:#232320;
+    --text:#e8e8e4;--text2:#a0a09a;--text3:#6b6b65;
+    --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.2);
+    --green-light:#085041;--green-text:#9FE1CB;
+    --blue-light:#0C447C;--blue-text:#B5D4F4;
+    --amber-light:#633806;--amber-text:#FAC775;
+    --purple-light:#2D1B69;--purple-text:#C4B5FD;
+    --danger-bg:#501313;--danger-border:#A32D2D;
+    --shadow:0 2px 12px rgba(0,0,0,0.3);
+  }
+}
+body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--bg3);min-height:100vh;transition:background .2s,color .2s}
+.app{max-width:800px;margin:0 auto;padding:1rem}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:12px;box-shadow:var(--shadow)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:0.5px solid var(--border2);border-radius:var(--radius);background:transparent;color:var(--text);font-size:13px;cursor:pointer;font-family:var(--font);transition:background .15s}
+.btn:hover{background:var(--bg2)}
+.btn.primary{background:var(--green);border-color:var(--green-dark);color:#fff;font-weight:500}
+.btn.primary:hover{background:var(--green-dark)}
+.btn.danger{border-color:var(--danger-border);color:var(--danger)}
+.btn.danger:hover{background:var(--danger-bg)}
+.btn.blue-btn{background:var(--blue-light);border-color:var(--blue-text);color:var(--blue-text)}
+.btn.sm{padding:5px 10px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+input,select,textarea{width:100%;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;font-family:var(--font);outline:none;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(29,158,117,0.12)}
+label{font-size:12px;color:var(--text2);margin-bottom:4px;display:block}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:500}
+.badge.green{background:var(--green-light);color:var(--green-text)}
+.badge.blue{background:var(--blue-light);color:var(--blue-text)}
+.badge.amber{background:var(--amber-light);color:var(--amber-text)}
+.badge.gray{background:var(--bg2);color:var(--text2)}
+.badge.purple{background:var(--purple-light);color:var(--purple-text)}
+.badge.danger{background:var(--danger-bg);color:var(--danger)}
+.nav{display:flex;gap:4px;margin-bottom:1.5rem;border-bottom:0.5px solid var(--border);padding-bottom:10px;flex-wrap:wrap}
+.nav-btn{padding:7px 12px;border:none;background:transparent;color:var(--text2);font-size:13px;cursor:pointer;border-radius:var(--radius);font-family:var(--font);display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.nav-btn.active{background:var(--green-light);color:var(--green-dark);font-weight:500}
+.nav-btn:hover:not(.active){background:var(--bg2)}
+.field{margin-bottom:14px}
+.row{display:flex;gap:10px;align-items:center}
+.row-between{display:flex;justify-content:space-between;align-items:center}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;color:var(--text2);font-weight:500;font-size:12px;border-bottom:0.5px solid var(--border);white-space:nowrap}
+td{padding:8px 10px;border-bottom:0.5px solid var(--border);color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg2)}
+.code-badge{font-family:var(--mono);font-size:12px;background:var(--blue-light);color:var(--blue-text);padding:3px 8px;border-radius:6px;font-weight:500}
+.empty{text-align:center;padding:2.5rem;color:var(--text2)}
+.empty i{font-size:28px;display:block;margin-bottom:8px}
+.search-wrap{position:relative;margin-bottom:14px}
+.search-wrap input{padding-left:34px}
+.search-wrap .ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:16px;pointer-events:none}
+.diff-pos{color:var(--green-text);font-weight:500}
+.diff-neg{color:var(--danger);font-weight:500}
+.stat{text-align:center}
+.stat .num{font-size:22px;font-weight:500}
+.stat .lbl{font-size:12px;color:var(--text2);margin-top:2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg3)}
+.login-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:2rem;width:100%;max-width:340px;box-shadow:var(--shadow)}
+.alert{padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.alert.error{background:var(--danger-bg);color:var(--danger);border:0.5px solid var(--danger-border)}
+.alert.success{background:var(--green-light);color:var(--green-text);border:0.5px solid #9FE1CB}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:.75rem 1.25rem;box-shadow:var(--shadow)}
+.dropdown{border:0.5px solid var(--border2);border-top:none;border-radius:0 0 var(--radius) var(--radius);max-height:220px;overflow-y:auto;display:none;background:var(--bg);position:relative;z-index:10;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.dropdown-item{padding:8px 12px;cursor:pointer;border-bottom:0.5px solid var(--border);font-size:13px}
+.dropdown-item:hover{background:var(--bg2)}
+.dropdown-item:last-child{border-bottom:none}
+summary{font-size:12px;color:var(--text2);cursor:pointer;user-select:none}
+details[open] summary{color:var(--green)}
+.metric{background:var(--bg2);border-radius:var(--radius);padding:1rem;min-width:0}
+.metric .mlbl{font-size:12px;color:var(--text2);margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.metric .mnum{font-size:22px;font-weight:500;line-height:1.1}
+.metric .msub{font-size:11px;color:var(--text3);margin-top:3px}
+.card-title{font-size:13px;font-weight:500;margin-bottom:12px;color:var(--text2);display:flex;align-items:center;gap:6px}
+.prog-bar{height:6px;background:var(--bg3);border-radius:100px;overflow:hidden;margin-top:6px}
+.prog-fill{height:100%;border-radius:100px;background:var(--green);transition:width .4s}
+.row-item{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:0.5px solid var(--border)}
+.row-item:last-child{border-bottom:none}
+.leg{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px;font-size:12px;color:var(--text2)}
+.leg-dot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:4px;vertical-align:middle}
+/* Toast de confirmación */
+#toastConfirm{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg);border:1.5px solid var(--green);border-radius:var(--radius-lg);padding:1rem 1.25rem;box-shadow:0 8px 32px rgba(0,0,0,0.18);z-index:9999;min-width:280px;max-width:360px;opacity:0;transition:all .3s;pointer-events:none}
+#toastConfirm.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toastConfirm .toast-icon{width:32px;height:32px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;margin-bottom:8px}
+#toastConfirm .toast-title{font-weight:600;color:var(--green-text);font-size:14px;margin-bottom:6px}
+#toastConfirm .toast-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:0.5px solid var(--border)}
+#toastConfirm .toast-row:last-child{border-bottom:none}
+#toastConfirm .toast-row .lbl{color:var(--text2)}
+#toastConfirm .toast-row .val{font-weight:500;color:var(--text);text-align:right;max-width:60%}
+/* Tarimas */
+.tarima-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:8px;box-shadow:var(--shadow)}
+.tarima-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px;flex-wrap:wrap}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal{background:var(--bg);border-radius:var(--radius-lg);padding:1.5rem;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,0.2)}
+.modal-title{font-weight:600;font-size:16px;margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem;padding-top:1rem;border-top:0.5px solid var(--border)}
+/* Audit */
+.audit-row{padding:10px;border-bottom:0.5px solid var(--border);font-size:12px}
+.audit-row:last-child{border-bottom:none}
+.audit-row .au-action{font-weight:500;color:var(--text);font-size:13px}
+.audit-row .au-meta{color:var(--text2);margin-top:2px}
+/* Pendientes */
+.pend-bar-wrap{background:var(--bg2);border-radius:var(--radius-lg);padding:1rem;margin-bottom:12px}
+/* Theme switcher */
+.theme-btn{padding:5px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-family:var(--font);display:inline-flex;align-items:center;gap:4px}
+.theme-btn.active{background:var(--green-light);color:var(--green-text);border-color:var(--green)}
+/* Filter bar */
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.filter-bar select,.filter-bar input{width:auto;flex:1;min-width:120px}
+/* Role badges */
+.role-admin{background:#FEF3C7;color:#92400E}
+.role-supervisor{background:var(--blue-light);color:var(--blue-text)}
+.role-conteador{background:var(--green-light);color:var(--green-text)}
+.role-consulta{background:var(--bg2);color:var(--text2)}
+/* Progress ring */
+.ring-wrap{display:flex;align-items:center;justify-content:center;gap:8px}
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+/* Mobile */
+@media(max-width:560px){
+  .grid3{grid-template-columns:1fr 1fr}
+  .grid2{grid-template-columns:1fr}
+  .grid4{grid-template-columns:1fr 1fr}
+  .topbar{flex-wrap:wrap;gap:6px}
+  .nav{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}
+  .nav-btn{font-size:12px;padding:6px 10px}
+  .app{padding:.5rem}
+}
+</style>
+</head>
+<body data-theme="auto">
+
+<!-- TOAST DE CONFIRMACIÓN -->
+<div id="toastConfirm">
+  <div class="toast-icon"><i class="ti ti-check"></i></div>
+  <div class="toast-title">✓ Conteo registrado correctamente</div>
+  <div id="toastBody"></div>
+</div>
+
+<!-- MODAL GENÉRICO -->
+<div id="modalOverlay" class="modal-overlay" style="display:none" onclick="closeModalOnOverlay(event)">
+  <div class="modal" id="modalBox">
+    <div class="modal-title" id="modalTitle"></div>
+    <div id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="login-wrap">
+  <div class="login-card">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <i class="ti ti-box" style="font-size:40px;color:var(--green)"></i>
+      <p style="font-size:19px;font-weight:600;margin-top:8px">Toma Física</p>
+      <p style="font-size:13px;color:var(--text2)">Sistema de Inventario v2</p>
+    </div>
+    <div id="loginAlert" style="display:none"></div>
+    <div class="field">
+      <label>Usuario</label>
+      <input type="text" id="loginUser" placeholder="ej: admin" autocomplete="username" />
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="loginPass" placeholder="••••••" autocomplete="current-password" />
+    </div>
+    <button class="btn primary" style="width:100%;justify-content:center;margin-top:4px" onclick="doLogin()">
+      <i class="ti ti-login"></i> Ingresar
+    </button>
+    <div style="text-align:center;margin-top:16px;display:flex;justify-content:center;gap:6px">
+      <button class="theme-btn" id="tb-auto" onclick="setTheme('auto')"><i class="ti ti-device-desktop"></i> Auto</button>
+      <button class="theme-btn" id="tb-light" onclick="setTheme('light')"><i class="ti ti-sun"></i> Claro</button>
+      <button class="theme-btn" id="tb-dark" onclick="setTheme('dark')"><i class="ti ti-moon"></i> Oscuro</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appWrap" class="app" style="display:none">
+  <div class="topbar">
+    <div class="row" style="gap:10px;flex-wrap:wrap">
+      <i class="ti ti-box" style="font-size:20px;color:var(--green)"></i>
+      <span style="font-weight:600;font-size:15px">Toma Física</span>
+      <span id="userBadge" class="badge green"></span>
+      <span id="roleBadge" class="badge gray"></span>
+    </div>
+    <div class="row" style="gap:6px">
+      <button class="theme-btn" id="tba-auto" onclick="setTheme('auto')" title="Automático"><i class="ti ti-device-desktop"></i></button>
+      <button class="theme-btn" id="tba-light" onclick="setTheme('light')" title="Claro"><i class="ti ti-sun"></i></button>
+      <button class="theme-btn" id="tba-dark" onclick="setTheme('dark')" title="Oscuro"><i class="ti ti-moon"></i></button>
+      <span id="fbStatus" title="Estado Firestore" style="display:inline-flex;align-items:center;font-size:16px;padding:0 4px"></span>
+      <button class="btn sm" onclick="doLogout()"><i class="ti ti-logout"></i> Salir</button>
+    </div>
+  </div>
+
+  <div class="nav" id="navBar">
+    <button class="nav-btn active" id="nav-conteo" onclick="showTab('conteo')"><i class="ti ti-clipboard-check"></i> Conteo</button>
+    <button class="nav-btn" id="nav-reconteo" onclick="showTab('reconteo')"><i class="ti ti-refresh"></i> Reconteo</button>
+    <button class="nav-btn" id="nav-tarimas" onclick="showTab('tarimas')"><i class="ti ti-stack-2"></i> Tarimas</button>
+    <button class="nav-btn" id="nav-pendientes" onclick="showTab('pendientes')"><i class="ti ti-clock-pause"></i> Pendientes</button>
+    <button class="nav-btn" id="nav-comparacion" onclick="showTab('comparacion')"><i class="ti ti-list-check"></i> Comparación</button>
+    <button class="nav-btn" id="nav-dashboard" onclick="showTab('dashboard')"><i class="ti ti-chart-bar"></i> Dashboard</button>
+    <button class="nav-btn" id="nav-auditoria" style="display:none" onclick="showTab('auditoria')"><i class="ti ti-history"></i> Auditoría</button>
+    <button class="nav-btn" id="nav-usuarios" style="display:none" onclick="showTab('usuarios')"><i class="ti ti-users"></i> Usuarios</button>
+    <button class="nav-btn" id="nav-csv" style="display:none" onclick="showTab('csv')"><i class="ti ti-upload"></i> CSV</button>
+  </div>
+
+  <!-- ── CONTEO ── -->
+  <div id="tab-conteo" class="screen active">
+    <div class="card">
+      <p style="font-weight:600;margin-bottom:16px"><i class="ti ti-clipboard-plus"></i> Registrar conteo</p>
+
+      <!-- Campo 1: Código de producto con autocompletar -->
+      <div class="field">
+        <label><i class="ti ti-barcode" style="font-size:12px"></i> Código de producto</label>
+        <div style="position:relative">
+          <input type="text" id="conteoSearch"
+            placeholder="Escribe el código o nombre…"
+            oninput="filterConteoSearch()"
+            autocomplete="off"
+            style="padding-left:36px;font-family:var(--mono);letter-spacing:.5px"
+          />
+          <i class="ti ti-barcode" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:16px;pointer-events:none"></i>
+        </div>
+        <div id="conteoDropdown" class="dropdown"></div>
+      </div>
+
+      <!-- Campo 2: Producto (automático) -->
+      <div class="field">
+        <label><i class="ti ti-package" style="font-size:12px"></i> Producto</label>
+        <div id="productoAutoDisplay" style="
+          padding:9px 12px;
+          border:0.5px solid var(--border2);
+          border-radius:var(--radius);
+          background:var(--bg2);
+          color:var(--text2);
+          font-size:14px;
+          min-height:38px;
+          display:flex;
+          align-items:center;
+          gap:8px;
+        ">
+          <i class="ti ti-dots" style="font-size:13px;opacity:.4"></i>
+          <span id="productoAutoText" style="color:var(--text3);font-style:italic">Se llenará al seleccionar el código</span>
+        </div>
+      </div>
+
+      <!-- Campo 3: Cantidad -->
+      <div class="field">
+        <label><i class="ti ti-123" style="font-size:12px"></i> Cantidad a contar</label>
+        <input type="number" id="cantidadContada" min="0" placeholder="0"
+          inputmode="numeric"
+          style="font-size:22px;font-weight:600;text-align:center;letter-spacing:1px"
+          onkeydown="if(event.key==='Enter') registrarConteo()"
+        />
+      </div>
+
+      <!-- Botón registrar -->
+      <button class="btn primary" id="btnRegistrarConteo" onclick="registrarConteo()"
+        style="width:100%;justify-content:center;padding:11px;font-size:14px;margin-top:4px">
+        <i class="ti ti-plus"></i> Registrar conteo
+      </button>
+
+      <!-- Código de conteo generado (aparece tras registrar) -->
+      <div id="codigoConteoGenerado" style="display:none;margin-top:14px;padding:12px 14px;background:var(--green-light);border-radius:var(--radius);border:0.5px solid #9FE1CB">
+        <p style="font-size:11px;color:var(--green-text);margin-bottom:4px">Código generado para la tarima:</p>
+        <p id="codigoConteoVal" style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--green-text);letter-spacing:2px"></p>
+        <p style="font-size:11px;color:var(--green-text);margin-top:4px;opacity:.8">Anota este código en la etiqueta de la tarima</p>
+      </div>
+    </div>
+
+    <div class="row-between" style="margin-bottom:10px">
+      <p style="font-weight:600;font-size:14px">Conteos registrados</p>
+      <span id="totalConteos" class="badge gray"></span>
+    </div>
+    <div class="filter-bar">
+      <div class="search-wrap" style="flex:2;min-width:160px;margin-bottom:0">
+        <i class="ti ti-search ico"></i>
+        <input type="text" id="conteoListSearch" placeholder="SKU, producto, tarima..." oninput="renderConteoList()" />
+      </div>
+      <select id="filterUsuario" onchange="renderConteoList()" style="flex:1;min-width:110px">
+        <option value="">Todos los usuarios</option>
+      </select>
+      <select id="filterTarima" onchange="renderConteoList()" style="flex:1;min-width:110px">
+        <option value="">Todas las tarimas</option>
+      </select>
+      <input type="date" id="filterFecha" onchange="renderConteoList()" style="flex:1;min-width:120px" />
+    </div>
+    <div id="conteoList"></div>
+  </div>
+
+  <!-- ── RECONTEO ── -->
+  <div id="tab-reconteo" class="screen">
+    <div class="card">
+      <p style="font-weight:600;margin-bottom:12px"><i class="ti ti-refresh"></i> Buscar producto para recontar</p>
+      <div class="field">
+        <div class="search-wrap" style="margin-bottom:0">
+          <i class="ti ti-search ico"></i>
+          <input type="text" id="reconteoSearch" placeholder="Código o nombre del producto..." oninput="filterReconteoSearch()" autocomplete="off" />
+        </div>
+        <div id="reconteoDropdown" class="dropdown"></div>
+      </div>
+    </div>
+    <div id="reconteoUbicaciones"></div>
+  </div>
+
+  <!-- ── TARIMAS ── -->
+  <div id="tab-tarimas" class="screen">
+    <div class="row-between" style="margin-bottom:12px">
+      <p style="font-weight:600;font-size:15px"><i class="ti ti-stack-2"></i> Gestión de Tarimas</p>
+      <button class="btn primary" id="btnNuevaTarima" onclick="abrirModalTarima()"><i class="ti ti-plus"></i> Nueva Tarima</button>
+    </div>
+    <div class="filter-bar">
+      <div class="search-wrap" style="flex:2;margin-bottom:0">
+        <i class="ti ti-search ico"></i>
+        <input type="text" id="tarimaBusqueda" placeholder="Buscar tarima..." oninput="renderTarimas()" />
+      </div>
+      <select id="tarimaFiltroEstado" onchange="renderTarimas()" style="flex:1;min-width:120px">
+        <option value="">Todos los estados</option>
+        <option value="abierta">Abiertas</option>
+        <option value="cerrada">Cerradas</option>
+      </select>
+    </div>
+    <div id="tarimList"></div>
+  </div>
+
+  <!-- ── PENDIENTES ── -->
+  <div id="tab-pendientes" class="screen">
+    <div class="pend-bar-wrap">
+      <div class="row-between" style="margin-bottom:6px">
+        <span style="font-size:13px;font-weight:500">Avance del inventario</span>
+        <span id="pendPct" style="font-size:13px;font-weight:600;color:var(--green)">0%</span>
+      </div>
+      <div class="prog-bar" style="height:10px"><div class="prog-fill" id="pendProgFill" style="width:0%"></div></div>
+      <div class="grid3" style="margin-top:12px">
+        <div style="text-align:center">
+          <p style="font-size:18px;font-weight:600" id="pendTotalCatalogo">0</p>
+          <p style="font-size:11px;color:var(--text2)">En catálogo</p>
+        </div>
+        <div style="text-align:center">
+          <p style="font-size:18px;font-weight:600;color:var(--green)" id="pendContados">0</p>
+          <p style="font-size:11px;color:var(--text2)">Contados</p>
+        </div>
+        <div style="text-align:center">
+          <p style="font-size:18px;font-weight:600;color:var(--danger)" id="pendPendientes">0</p>
+          <p style="font-size:11px;color:var(--text2)">Pendientes</p>
+        </div>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <i class="ti ti-search ico"></i>
+      <input type="text" id="pendSearch" placeholder="Buscar producto pendiente..." oninput="renderPendientes()" />
+    </div>
+    <div id="pendList"></div>
+  </div>
+
+  <!-- ── COMPARACION ── -->
+  <div id="tab-comparacion" class="screen">
+    <div class="grid3" style="margin-bottom:1rem">
+      <div class="card stat">
+        <p class="num" id="statTotal">0</p>
+        <p class="lbl">Productos contados</p>
+      </div>
+      <div class="card stat">
+        <p class="num" id="statDiff">0</p>
+        <p class="lbl">Con diferencia</p>
+      </div>
+      <div class="card stat">
+        <p class="num" id="statMatch">0</p>
+        <p class="lbl">Sin diferencia</p>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <div class="search-wrap" style="flex:2;margin-bottom:0">
+        <i class="ti ti-search ico"></i>
+        <input type="text" id="compSearch" placeholder="Filtrar productos..." oninput="renderComparacion()" />
+      </div>
+      <select id="compFiltro" onchange="renderComparacion()" style="flex:1;min-width:130px">
+        <option value="">Todos</option>
+        <option value="diff">Con diferencia</option>
+        <option value="ok">Sin diferencia</option>
+        <option value="pos">Sobrante</option>
+        <option value="neg">Faltante</option>
+      </select>
+    </div>
+    <div id="compList"></div>
+    <p style="font-size:12px;color:var(--text2);margin-top:8px;text-align:center" id="csvNote"></p>
+  </div>
+
+  <!-- ── DASHBOARD ── -->
+  <div id="tab-dashboard" class="screen">
+    <div id="dash-metrics" class="grid4" style="margin-bottom:12px"></div>
+    <div id="dash-metrics2" class="grid4" style="margin-bottom:12px"></div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="card">
+        <p class="card-title"><i class="ti ti-chart-bar"></i> Conteos por tipo de ubicación</p>
+        <div class="leg">
+          <span><span class="leg-dot" style="background:#1D9E75"></span>Tarima</span>
+          <span><span class="leg-dot" style="background:#378ADD"></span>Estante</span>
+          <span><span class="leg-dot" style="background:#F59E0B"></span>Piso</span>
+        </div>
+        <div style="position:relative;height:180px">
+          <canvas id="chartTipo"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <p class="card-title"><i class="ti ti-circle-check"></i> Estado de diferencias</p>
+        <div class="leg">
+          <span><span class="leg-dot" style="background:#1D9E75"></span>Sin diferencia</span>
+          <span><span class="leg-dot" style="background:#E24B4A"></span>Con diferencia</span>
+        </div>
+        <div style="position:relative;height:180px">
+          <canvas id="chartDiff"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <p class="card-title"><i class="ti ti-trending-up"></i> Productos con mayor diferencia absoluta</p>
+      <div style="position:relative" id="chartTopWrap">
+        <canvas id="chartTop"></canvas>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <p class="card-title"><i class="ti ti-users"></i> Conteos por usuario</p>
+        <div id="dashUserList"></div>
+      </div>
+      <div class="card">
+        <p class="card-title"><i class="ti ti-clock"></i> Últimos 5 conteos</p>
+        <div id="dashRecentList"></div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--text3);text-align:center;margin-top:10px" id="dashFootNote"></p>
+  </div>
+
+  <!-- ── AUDITORÍA ── -->
+  <div id="tab-auditoria" class="screen">
+    <div class="row-between" style="margin-bottom:12px">
+      <p style="font-weight:600;font-size:15px"><i class="ti ti-history"></i> Historial de Auditoría</p>
+      <span id="auditTotal" class="badge gray"></span>
+    </div>
+    <div class="filter-bar">
+      <div class="search-wrap" style="flex:2;margin-bottom:0">
+        <i class="ti ti-search ico"></i>
+        <input type="text" id="auditSearch" placeholder="Buscar en auditoría..." oninput="renderAuditoria()" />
+      </div>
+      <select id="auditFiltroUser" onchange="renderAuditoria()" style="flex:1;min-width:120px">
+        <option value="">Todos los usuarios</option>
+      </select>
+      <input type="date" id="auditFiltroFecha" onchange="renderAuditoria()" style="flex:1;min-width:120px" />
+    </div>
+    <div id="auditList"></div>
+  </div>
+
+  <!-- ── USUARIOS ── -->
+  <div id="tab-usuarios" class="screen">
+    <div class="row-between" style="margin-bottom:12px">
+      <p style="font-weight:600;font-size:15px"><i class="ti ti-users"></i> Administración de Usuarios</p>
+      <button class="btn primary" onclick="abrirModalUsuario()"><i class="ti ti-user-plus"></i> Nuevo Usuario</button>
+    </div>
+    <div id="usuariosList"></div>
+  </div>
+
+  <!-- ── CSV ── -->
+  <div id="tab-csv" class="screen">
+
+    <!-- Sección 1: Catálogo maestro -->
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <i class="ti ti-book" style="font-size:18px;color:var(--green)"></i>
+        <p style="font-weight:600;font-size:14px">Catálogo maestro</p>
+        <span id="badgeCatalogMaestro" class="badge gray" style="margin-left:auto"></span>
+      </div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px">
+        Todos tus productos, tengan o no existencia. Se usa en el módulo
+        <strong>Conteo</strong> para buscar al registrar.<br>
+        Columnas requeridas: <code style="font-family:var(--mono);background:var(--bg2);padding:2px 6px;border-radius:4px">codigo, producto</code>
+      </p>
+      <input type="file" id="csvInputMaestro" accept=".csv"
+        style="width:auto;border:none;padding:0;font-size:13px;background:transparent"
+        onchange="loadCSVMaestro(event)" />
+      <div id="csvAlertMaestro" style="margin-top:12px"></div>
+      <div id="csvPreviewMaestro"></div>
+    </div>
+
+    <!-- Sección 2: Catálogo de existencias -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <i class="ti ti-package" style="font-size:18px;color:var(--blue-text)"></i>
+        <p style="font-weight:600;font-size:14px">Catálogo de existencias</p>
+        <span id="badgeCatalogExist" class="badge gray" style="margin-left:auto"></span>
+      </div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px">
+        Solo los productos con stock en sistema. Se usa en el módulo
+        <strong>Comparación</strong> para calcular diferencias.<br>
+        Columnas requeridas: <code style="font-family:var(--mono);background:var(--bg2);padding:2px 6px;border-radius:4px">codigo, producto, existencia</code>
+      </p>
+      <input type="file" id="csvInputExist" accept=".csv"
+        style="width:auto;border:none;padding:0;font-size:13px;background:transparent"
+        onchange="loadCSVExistencias(event)" />
+      <div id="csvAlertExist" style="margin-top:12px"></div>
+      <div id="csvPreviewExist"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Firebase SDKs (compat v9) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+// ════════════════════════════════════════════
+//  FIREBASE CONFIG
+// ════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDC6VKCKXJD6e7jtQNQxvoBVjtoVBcCmeU",
+  authDomain:        "inventario-bodega-2ce87.firebaseapp.com",
+  databaseURL:       "https://inventario-bodega-2ce87-default-rtdb.firebaseio.com",
+  projectId:         "inventario-bodega-2ce87",
+  storageBucket:     "inventario-bodega-2ce87.firebasestorage.app",
+  messagingSenderId: "29303001299",
+  appId:             "1:29303001299:web:d3ebde582a06a3a8c18426",
+  measurementId:     "G-GTN33FC42Z"
+};
+
+// ── Inicializar Firebase ──
+let db   = null;
+let auth = null;
+let fbListeners = [];
+let fbReady = false;
+
+try {
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  db   = firebase.firestore();
+  auth = firebase.auth();
+
+  // Persistencia de sesión: el usuario permanece logueado aunque cierre el navegador
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+    .catch(e => console.warn('[Auth] setPersistence error:', e.message));
+
+  // Habilitar persistencia offline Firestore
+  db.enablePersistence({ synchronizeTabs: true })
+    .then(() => console.log('[Firebase] Persistencia offline habilitada'))
+    .catch(err => {
+      if (err.code === 'failed-precondition') console.warn('[Firebase] Persistencia: múltiples tabs abiertas');
+      else if (err.code === 'unimplemented') console.warn('[Firebase] Persistencia: browser no soportado');
+    });
+
+  fbReady = true;
+  console.log('[Firebase] Firestore + Auth inicializados ✓');
+
+  // Observador de sesión — detecta login/logout automáticamente
+  auth.onAuthStateChanged(firebaseUser => {
+    if(firebaseUser){
+      // Usuario con sesión activa — cargar su perfil de Firestore
+      console.log('[Auth] Sesión activa:', firebaseUser.email);
+      showFbStatus(true);
+      if(!currentUser){
+        // No hay sesión de app aún — cargar perfil y arrancar
+        _cargarPerfilYArrancar(firebaseUser);
+      }
+    } else {
+      // Sin sesión — mostrar login
+      console.log('[Auth] Sin sesión activa');
+      if(currentUser) _limpiarSesionApp();
+      showLoginScreen();
+    }
+  });
+
+} catch(e) {
+  console.error('[Firebase] Error inicializando:', e.message);
+  fbReady = false;
+}
+
+function showLoginScreen(){
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('appWrap').style.display     = 'none';
+  document.getElementById('loginAlert').style.display  = 'none';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+function _limpiarSesionApp(){
+  stopFirestoreListeners();
+  currentUser = null;
+  counts=[]; catalog=[]; catalogExistencias=[]; tarimas=[]; users=[]; auditLog=[];
+  Object.values(dashCharts).forEach(c => { try{c.destroy()}catch(e){} });
+  dashCharts = {};
+  ['nav-csv','nav-auditoria','nav-usuarios'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+  selectedForConteo = null;
+}
+
+async function _cargarPerfilYArrancar(firebaseUser){
+  try {
+    const snap = await db.collection('usuarios').doc(firebaseUser.uid).get();
+    if(!snap.exists){
+      showNotif('Tu cuenta no tiene perfil en el sistema. Contacta al administrador.','danger');
+      auth.signOut();
+      return;
+    }
+    const perfil = {...snap.data(), id: snap.id};
+    if(!perfil.active){
+      showNotif('Tu cuenta está desactivada. Contacta al administrador.','danger');
+      auth.signOut();
+      return;
+    }
+    // Cargar catálogos en paralelo
+    const [catalogSnap, existSnap, usersSnap] = await Promise.all([
+      db.collection('catalogo').doc('snapshot').get(),
+      db.collection('catalogo_existencias').doc('snapshot').get(),
+      db.collection('usuarios').get()
+    ]);
+    if(catalogSnap.exists && catalogSnap.data().items?.length > 0){
+      catalog = catalogSnap.data().items;
+      localStorage.setItem(LS.catalog, JSON.stringify(catalog));
+    } else {
+      catalog = JSON.parse(localStorage.getItem(LS.catalog)||'[]');
+    }
+    if(existSnap.exists && existSnap.data().items?.length > 0){
+      catalogExistencias = existSnap.data().items;
+      localStorage.setItem(LS.catalogExistencias, JSON.stringify(catalogExistencias));
+    } else {
+      catalogExistencias = JSON.parse(localStorage.getItem(LS.catalogExistencias)||'[]');
+    }
+    if(usersSnap.docs.length > 0){
+      users = usersSnap.docs.map(d=>({...d.data(), id:d.id}));
+      localStorage.setItem(LS.users, JSON.stringify(users));
+    }
+    counts  = JSON.parse(localStorage.getItem(LS.counts)||'[]');
+    tarimas = JSON.parse(localStorage.getItem(LS.tarimas)||'[]');
+    auditLog= JSON.parse(localStorage.getItem(LS.audit)||'[]');
+
+    _mostrarAppConUsuario(perfil);
+  } catch(err){
+    console.error('[Auth] Error cargando perfil:', err.message);
+    showNotif('Error al cargar tu perfil. Revisa la conexión.','danger');
+  }
+}
+
+function _mostrarAppConUsuario(perfil){
+  currentUser = perfil;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appWrap').style.display     = 'block';
+  document.getElementById('userBadge').textContent     = perfil.name;
+  const role = ROLES[perfil.role] || ROLES.consulta;
+  const rb   = document.getElementById('roleBadge');
+  rb.textContent = role.label;
+  rb.className   = 'badge ' + role.cls;
+  if(role.canCSV)    document.getElementById('nav-csv').style.display = '';
+  if(role.canAudit)  document.getElementById('nav-auditoria').style.display = '';
+  if(role.canUsers)  document.getElementById('nav-usuarios').style.display = '';
+  const btnT = document.getElementById('btnNuevaTarima');
+  if(!role.canTarima && btnT) btnT.style.display='none';
+
+  renderAll();
+  populateFilters();
+  startFirestoreListeners();
+  _migrarDatosLocalesAFirestore();
+  // Seed inicial de usuarios (solo si Firestore está vacío, solo primera vez)
+  if(perfil.role === 'admin') _seedUsuariosFirebase();
+  logAudit('LOGIN', null, null, `Login de ${perfil.name}`);
+}
+
+// ── Indicador de conexión ──
+function showFbStatus(ok){
+  let el = document.getElementById('fbStatus');
+  if(!el) return;
+  el.innerHTML = ok
+    ? '<i class="ti ti-cloud-check" style="color:var(--green)"></i>'
+    : '<i class="ti ti-cloud-off" style="color:var(--text3)"></i>';
+  el.title = ok ? 'Sincronizado con Firestore' : 'Modo offline (localStorage)';
+}
+
+// ════════════════════════════════════════════
+//  ESTADO GLOBAL
+// ════════════════════════════════════════════
+let currentUser = null;
+let catalog            = [];   // Catálogo maestro: codigo + producto
+let catalogExistencias = [];   // Catálogo de existencias: codigo + producto + existencia
+let counts    = [];
+let tarimas   = [];
+let users     = [];
+let auditLog  = [];
+let dashCharts = {};
+let selectedForConteo = null;
+
+// ── Storage keys ──
+const LS = {
+  counts:            'inv2_counts',
+  catalog:           'inv2_catalog',
+  catalogExistencias:'inv2_catalog_exist',
+  tarimas:           'inv2_tarimas',
+  users:             'inv2_users',
+  audit:             'inv2_audit',
+  theme:             'inv2_theme'
+};
+
+// ── Roles & permisos ──
+const ROLES = {
+  admin:       {label:'Administrador', cls:'role-admin',      canCSV:true,  canUsers:true,  canAudit:true,  canDelete:true,  canEdit:true,  canTarima:true},
+  supervisor:  {label:'Supervisor',    cls:'role-supervisor', canCSV:false, canUsers:false, canAudit:true,  canDelete:true,  canEdit:true,  canTarima:true},
+  conteador:   {label:'Conteador',     cls:'role-conteador',  canCSV:false, canUsers:false, canAudit:false, canDelete:false, canEdit:true,  canTarima:false},
+  consulta:    {label:'Consulta',      cls:'role-consulta',   canCSV:false, canUsers:false, canAudit:false, canDelete:false, canEdit:false, canTarima:false},
+};
+
+// ── localStorage save helpers ──
+function saveCounts()             { try{localStorage.setItem(LS.counts,             JSON.stringify(counts));             }catch(e){} }
+function saveCatalog()            { try{localStorage.setItem(LS.catalog,            JSON.stringify(catalog));            }catch(e){} }
+function saveCatalogExistencias() { try{localStorage.setItem(LS.catalogExistencias, JSON.stringify(catalogExistencias)); }catch(e){} }
+function saveTarimas()            { try{localStorage.setItem(LS.tarimas,            JSON.stringify(tarimas));            }catch(e){} }
+function saveUsers()              { try{localStorage.setItem(LS.users,              JSON.stringify(users));              }catch(e){} }
+function saveAudit()              { try{localStorage.setItem(LS.audit,              JSON.stringify(auditLog));           }catch(e){} }
+
+// ── Firestore: escribir ──
+function fbSet(col, id, data){
+  if(!fbReady) return;
+  // Limpiar undefined antes de enviar a Firestore
+  const clean = JSON.parse(JSON.stringify(data));
+  db.collection(col).doc(String(id)).set(clean, {merge:true})
+    .then(()=>showFbStatus(true))
+    .catch(e=>{
+      console.error('[Firestore] set error en ' + col + ':', e.code, e.message);
+      if(e.code === 'permission-denied') showFbStatus(false);
+    });
+}
+function fbDelete(col, id){
+  if(!fbReady) return;
+  db.collection(col).doc(String(id)).delete()
+    .catch(e=>console.warn('[Firestore] delete error:',e));
+}
+
+// ── Firestore: listeners en tiempo real ──
+function startFirestoreListeners(){
+  stopFirestoreListeners();
+  const listen = (col, onData) => {
+    const unsub = db.collection(col).onSnapshot(
+      snap => {
+        if(!currentUser) return; // guard: no procesar si no hay sesión activa
+        onData(snap.docs.map(d => ({...d.data(), id: d.id})));
+        showFbStatus(true);
+      },
+      err => { console.warn('[Firestore] listener error:', err.code, err.message); showFbStatus(false); }
+    );
+    fbListeners.push(unsub);
+  };
+
+  listen('conteos', data => {
+    counts = data;
+    localStorage.setItem(LS.counts, JSON.stringify(counts));
+    renderAll();
+    populateFilters();
+    // Actualizar dashboard si está activo
+    if(document.getElementById('tab-dashboard') && document.getElementById('tab-dashboard').classList.contains('active')){
+      renderDashboard();
+    }
+  });
+  listen('tarimas', data => {
+    tarimas = data;
+    localStorage.setItem(LS.tarimas, JSON.stringify(tarimas));
+    if(document.getElementById('tab-tarimas').classList.contains('active')) renderTarimas();
+    populateFilters();
+  });
+  listen('usuarios', data => {
+    if(data.length > 0){
+      // Filtrar campo password por si acaso (no debería estar en Firestore)
+      users = data.map(({ password, ...u }) => u);
+      // Actualizar currentUser si cambió su propio registro
+      const refreshed = users.find(d => d.id === currentUser?.id);
+      if(refreshed) currentUser = refreshed;
+      localStorage.setItem(LS.users, JSON.stringify(users));
+      renderUsuarios();
+      populateFilters();
+    }
+  });
+  // Listener catálogo maestro (snapshot único)
+  const unsubCatalog = db.collection('catalogo').doc('snapshot').onSnapshot(
+    snap => {
+      if(!currentUser) return;
+      if(snap.exists && snap.data().items && snap.data().items.length > 0){
+        catalog = snap.data().items;
+        localStorage.setItem(LS.catalog, JSON.stringify(catalog));
+        renderCSVPreviewMaestro();
+        renderAll();
+        showFbStatus(true);
+      }
+    },
+    err => console.warn('[Firestore] catalogo listener error:', err.message)
+  );
+  fbListeners.push(unsubCatalog);
+
+  // Listener catálogo existencias (snapshot único) — CRÍTICO para comparación multi-dispositivo
+  const unsubExist = db.collection('catalogo_existencias').doc('snapshot').onSnapshot(
+    snap => {
+      if(!currentUser) return;
+      if(snap.exists && snap.data().items && snap.data().items.length > 0){
+        catalogExistencias = snap.data().items;
+        localStorage.setItem(LS.catalogExistencias, JSON.stringify(catalogExistencias));
+        renderCSVPreviewExist();
+        renderComparacion();
+        showFbStatus(true);
+      }
+    },
+    err => console.warn('[Firestore] catalogo_existencias listener error:', err.message)
+  );
+  fbListeners.push(unsubExist);
+  listen('auditoria', data => {
+    auditLog = data.sort((a,b) => (b.ts||'').localeCompare(a.ts||''));
+    localStorage.setItem(LS.audit, JSON.stringify(auditLog));
+    if(document.getElementById('tab-auditoria').classList.contains('active')) renderAuditoria();
+  });
+}
+
+function stopFirestoreListeners(){
+  fbListeners.forEach(u => { try{ u(); }catch(e){} });
+  fbListeners = [];
+}
+
+// ── Wrappers: guardar en LS y sincronizar a Firestore ──
+function saveCountsSync(entry){
+  saveCounts();
+  if(entry) fbSet('conteos', entry.id, entry);
+}
+function saveTarimasSync(t){
+  saveTarimas();
+  if(t) fbSet('tarimas', t.id, t);
+}
+function saveUsersSync(u){
+  saveUsers();
+  if(u){
+    // Nunca subir el campo 'password' a Firestore — Firebase Auth lo gestiona
+    const { password, ...safeU } = u;
+    fbSet('usuarios', safeU.id, safeU);
+  }
+}
+function saveCatalogSync(){
+  saveCatalog();
+  if(fbReady){
+    // Guardar como snapshot único (más eficiente, funciona con catálogos grandes)
+    const clean = JSON.parse(JSON.stringify(catalog));
+    db.collection('catalogo').doc('snapshot').set({
+      items: clean,
+      actualizadoEn: new Date().toISOString(),
+      actualizadoPor: currentUser ? currentUser.name : 'Sistema',
+      total: clean.length
+    }).then(()=>showFbStatus(true))
+      .catch(e=>console.error('[Firestore] Error guardando catalogo:', e.message));
+  }
+}
+function saveCatalogExistSync(){
+  saveCatalogExistencias();
+  // Subir a Firestore como documento único 'snapshot' para que todos los dispositivos lo reciban
+  if(fbReady){
+    const clean = JSON.parse(JSON.stringify(catalogExistencias));
+    db.collection('catalogo_existencias').doc('snapshot').set({
+      items: clean,
+      actualizadoEn: new Date().toISOString(),
+      actualizadoPor: currentUser ? currentUser.name : 'Sistema',
+      total: clean.length
+    }).then(()=>showFbStatus(true))
+      .catch(e=>console.error('[Firestore] Error guardando catalogo_existencias:', e.message));
+  }
+}
+function saveAuditSync(entry){
+  saveAudit();
+  if(entry && fbReady) fbSet('auditoria', entry.id, entry);
+}
+function fbDeleteCount(id){
+  // Eliminar de array local
+  counts = counts.filter(c => String(c.id) !== String(id));
+  saveCounts();
+  fbDelete('conteos', String(id));
+}
+function fbDeleteUser(id){
+  users = users.filter(u => String(u.id) !== String(id));
+  saveUsers();
+  fbDelete('usuarios', String(id));
+}
+function fbDeleteTarima(id){
+  tarimas = tarimas.filter(t => String(t.id) !== String(id));
+  saveTarimas();
+  fbDelete('tarimas', String(id));
+}
+
+// ════════════════════════════════════════════
+//  AUDITORÍA
+// ════════════════════════════════════════════
+function logAudit(action, prevVal, newVal, extra){
+  const entry = {
+    id: 'A' + Date.now() + Math.random(),
+    ts: new Date().toISOString(),
+    usuario: currentUser ? currentUser.name : 'Sistema',
+    usuarioId: currentUser ? currentUser.id : null,
+    accion: action,
+    anterior: prevVal !== undefined ? JSON.stringify(prevVal) : null,
+    nuevo:    newVal  !== undefined ? JSON.stringify(newVal)  : null,
+    extra: extra || null
+  };
+  auditLog.unshift(entry);
+  if(auditLog.length > 5000) auditLog = auditLog.slice(0,5000);
+  saveAuditSync(entry);
+}
+
+// ════════════════════════════════════════════
+//  TEMA / MODO VISUAL
+// ════════════════════════════════════════════
+function setTheme(t){
+  document.body.dataset.theme = t;
+  localStorage.setItem(LS.theme, t);
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll(`[id$="-${t}"],[id$="-${t}"]`).forEach(b => b.classList.add('active'));
+  // Botones login
+  ['auto','light','dark'].forEach(mode => {
+    const el = document.getElementById('tb-'+mode);
+    if(el) el.classList.toggle('active', mode===t);
+    const el2 = document.getElementById('tba-'+mode);
+    if(el2) el2.classList.toggle('active', mode===t);
+  });
+}
+function applyStoredTheme(){
+  const t = localStorage.getItem(LS.theme) || 'auto';
+  setTheme(t);
+}
+
+// ════════════════════════════════════════════
+//  AUTH — Firebase Authentication
+// ════════════════════════════════════════════
+
+// Email de Firebase Auth se construye como: username@toma-fisica.app
+// El perfil real (nombre, rol, activo) vive en Firestore /usuarios/{uid}
+function _buildEmail(username){ return username.trim().toLowerCase().replace(/\s+/g,'') + '@toma-fisica.app'; }
+
+function doLogin(){
+  const username = document.getElementById('loginUser').value.trim();
+  const pass     = document.getElementById('loginPass').value;
+  const al       = document.getElementById('loginAlert');
+  const btn      = document.querySelector('#loginScreen .btn.primary');
+
+  if(!username || !pass){
+    al.style.display = 'block';
+    al.innerHTML = '<div class="alert error"><i class="ti ti-alert-circle"></i> Ingresa usuario y contraseña</div>';
+    return;
+  }
+
+  al.style.display = 'none';
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="ti ti-loader"></i> Conectando...'; }
+
+  const email = _buildEmail(username);
+  auth.signInWithEmailAndPassword(email, pass)
+    .then(() => {
+      // onAuthStateChanged se encargará de cargar el perfil y mostrar la app
+      if(btn){ btn.disabled=false; btn.innerHTML='<i class="ti ti-login"></i> Ingresar'; }
+    })
+    .catch(err => {
+      if(btn){ btn.disabled=false; btn.innerHTML='<i class="ti ti-login"></i> Ingresar'; }
+      al.style.display = 'block';
+      let msg = 'Usuario o contraseña incorrectos';
+      if(err.code === 'auth/network-request-failed') msg = 'Sin conexión a internet';
+      if(err.code === 'auth/too-many-requests')      msg = 'Demasiados intentos. Intenta más tarde';
+      al.innerHTML = `<div class="alert error"><i class="ti ti-alert-circle"></i> ${msg}</div>`;
+      console.warn('[Auth] Login error:', err.code);
+    });
+}
+
+// ════════════════════════════════════════════
+//  MIGRACIÓN: datos locales → Firestore (solo si Firestore está vacío)
+// ════════════════════════════════════════════
+function _migrarDatosLocalesAFirestore(){
+  if(!fbReady || !currentUser) return;
+  // Subir catálogo maestro si hay datos locales y Firestore no los tiene
+  if(catalog.length > 0){
+    db.collection('catalogo').doc('snapshot').get().then(snap => {
+      if(!snap.exists || !snap.data().items || snap.data().items.length === 0){
+        console.log('[Migración] Subiendo catálogo maestro a Firestore...');
+        saveCatalogSync();
+      }
+    }).catch(()=>{});
+  }
+  // Subir catálogo existencias si hay datos locales y Firestore no los tiene
+  if(catalogExistencias.length > 0){
+    db.collection('catalogo_existencias').doc('snapshot').get().then(snap => {
+      if(!snap.exists || !snap.data().items || snap.data().items.length === 0){
+        console.log('[Migración] Subiendo catálogo existencias a Firestore...');
+        saveCatalogExistSync();
+      }
+    }).catch(()=>{});
+  }
+}
+
+// ════════════════════════════════════════════
+//  SEED: crear usuarios por defecto en Firebase Auth
+//  Se llama una sola vez (cuando no hay usuarios en Firestore)
+// ════════════════════════════════════════════
+async function _seedUsuariosFirebase(){
+  if(!fbReady) return;
+  const SEED_KEY = 'inv2_fb_seed_v1';
+  if(localStorage.getItem(SEED_KEY)) return; // ya se ejecutó
+
+  const snap = await db.collection('usuarios').get();
+  if(snap.docs.length > 0){ localStorage.setItem(SEED_KEY,'1'); return; } // ya hay usuarios
+
+  console.log('[Seed] Creando usuarios por defecto en Firebase Auth...');
+  const defaultUsers = [
+    {username:'admin',   pass:'admin123',  role:'admin',      name:'Administrador'},
+    {username:'bodega1', pass:'bod123',    role:'conteador',  name:'Bodeguero 1'},
+    {username:'bodega2', pass:'bod234',    role:'conteador',  name:'Bodeguero 2'},
+    {username:'super1',  pass:'sup123',    role:'supervisor', name:'Supervisor 1'},
+  ];
+
+  for(const u of defaultUsers){
+    try {
+      const res = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_CONFIG.apiKey}`,
+        { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ email: _buildEmail(u.username), password: u.pass, returnSecureToken:false }) }
+      );
+      const data = await res.json();
+      if(data.localId){
+        const perfil = { id:data.localId, username:u.username, email:_buildEmail(u.username), role:u.role, name:u.name, active:true, createdAt:new Date().toISOString() };
+        await db.collection('usuarios').doc(data.localId).set(perfil);
+        console.log('[Seed] Usuario creado:', u.username);
+      }
+    } catch(e){ console.warn('[Seed] Error creando', u.username, e.message); }
+  }
+  localStorage.setItem(SEED_KEY,'1');
+  console.log('[Seed] Usuarios por defecto creados ✓');
+  showNotif('Usuarios por defecto creados. Admin: admin / admin123','success');
+}
+
+function doLogout(){
+  if(currentUser) logAudit('LOGOUT', null, null, `Logout de ${currentUser.name}`);
+  _limpiarSesionApp();
+  auth.signOut().catch(e => console.warn('[Auth] signOut error:', e.message));
+  // onAuthStateChanged detectará el logout y llamará showLoginScreen()
+}
+
+// ════════════════════════════════════════════
+//  NAV
+// ════════════════════════════════════════════
+function showTab(tab){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const sc = document.getElementById('tab-'+tab);
+  if(sc) sc.classList.add('active');
+  const nb = document.getElementById('nav-'+tab);
+  if(nb) nb.classList.add('active');
+  if(tab==='comparacion') renderComparacion();
+  if(tab==='dashboard')   renderDashboard();
+  if(tab==='tarimas')     renderTarimas();
+  if(tab==='pendientes')  renderPendientes();
+  if(tab==='auditoria')   renderAuditoria();
+  if(tab==='usuarios')    renderUsuarios();
+}
+
+// ════════════════════════════════════════════
+//  TARIMAS
+// ════════════════════════════════════════════
+function genTarimaCode(){
+  const now = new Date();
+  const ddmm = String(now.getDate()).padStart(2,'0') + String(now.getMonth()+1).padStart(2,'0');
+  const seq = String(tarimas.length + 1).padStart(4,'0');
+  return `T-${ddmm}-${seq}`;
+}
+
+function abrirModalTarima(id){
+  const role = ROLES[currentUser.role];
+  if(!role.canTarima){ showNotif('No tienes permiso para gestionar tarimas','danger'); return; }
+  const editing = id ? tarimas.find(t=>t.id===id) : null;
+  openModal(
+    editing ? '<i class="ti ti-edit"></i> Editar Tarima' : '<i class="ti ti-plus"></i> Nueva Tarima',
+    `<div class="field"><label>Responsable</label>
+      <input id="mTarimaResp" value="${editing ? editing.responsable : currentUser.name}" /></div>
+     <div class="field"><label>Descripción / Pasillo</label>
+      <input id="mTarimaDesc" placeholder="Ej: Pasillo A, Bodega Central..." value="${editing ? editing.descripcion : ''}" /></div>
+     <div class="field"><label>Estado</label>
+      <select id="mTarimaEst">
+        <option value="abierta" ${(!editing||editing.estado==='abierta')?'selected':''}>Abierta</option>
+        <option value="cerrada" ${(editing&&editing.estado==='cerrada')?'selected':''}>Cerrada</option>
+      </select></div>`,
+    [
+      {label:'Cancelar', cls:'btn', fn:'closeModal()'},
+      {label: editing ? 'Guardar cambios' : 'Crear Tarima', cls:'btn primary', fn: editing ? `guardarEditTarima('${id}')` : 'crearTarima()'}
+    ]
+  );
+}
+
+function crearTarima(){
+  const resp = document.getElementById('mTarimaResp').value.trim();
+  const desc = document.getElementById('mTarimaDesc').value.trim();
+  const est  = document.getElementById('mTarimaEst').value;
+  if(!resp){ alert('Ingresa un responsable'); return; }
+  const t = {
+    id: 'T' + Date.now(),
+    codigo: genTarimaCode(),
+    responsable: resp,
+    descripcion: desc,
+    estado: est,
+    creadoEn: new Date().toISOString(),
+    creadoPor: currentUser.name
+  };
+  tarimas.push(t);
+  saveTarimasSync(t);
+  logAudit('CREAR_TARIMA', null, t, `Tarima ${t.codigo} creada`);
+  closeModal();
+  renderTarimas();
+  populateFilters();
+  showNotif(`Tarima ${t.codigo} creada`, 'success');
+}
+
+function guardarEditTarima(id){
+  const t = tarimas.find(x=>x.id===id);
+  if(!t) return;
+  const prev = {...t};
+  t.responsable  = document.getElementById('mTarimaResp').value.trim();
+  t.descripcion  = document.getElementById('mTarimaDesc').value.trim();
+  t.estado       = document.getElementById('mTarimaEst').value;
+  saveTarimasSync(t);
+  logAudit('EDITAR_TARIMA', prev, {...t}, `Tarima ${t.codigo} editada`);
+  closeModal();
+  renderTarimas();
+  populateFilters();
+}
+
+function cerrarTarima(id){
+  const t = tarimas.find(x=>x.id===id);
+  if(!t) return;
+  const role = ROLES[currentUser.role];
+  if(!role.canTarima){ showNotif('Sin permiso','danger'); return; }
+  const prev = t.estado;
+  t.estado = t.estado==='abierta' ? 'cerrada' : 'abierta';
+  saveTarimasSync(t);
+  logAudit('CAMBIO_ESTADO_TARIMA', prev, t.estado, `Tarima ${t.codigo}`);
+  renderTarimas();
+}
+
+function verDetalleTarima(id){
+  const t = tarimas.find(x=>x.id===id);
+  if(!t) return;
+  const items = counts.filter(c=>c.tarimaId===id);
+  const prods = {};
+  items.forEach(c => {
+    if(!prods[c.codigo]) prods[c.codigo]={codigo:c.codigo, producto:c.producto, total:0, ubicaciones:[]};
+    prods[c.codigo].total += c.cantidad;
+    prods[c.codigo].ubicaciones.push(c);
+  });
+  const pList = Object.values(prods);
+  const totalUnits = items.reduce((s,c)=>s+c.cantidad,0);
+  openModal(
+    `<i class="ti ti-stack-2"></i> ${t.codigo}`,
+    `<div style="margin-bottom:12px">
+       <p style="font-size:13px;color:var(--text2)">Responsable: <strong>${t.responsable}</strong></p>
+       <p style="font-size:13px;color:var(--text2)">Estado: <span class="badge ${t.estado==='abierta'?'green':'gray'}">${t.estado}</span></p>
+       <p style="font-size:12px;color:var(--text3);margin-top:4px">${t.descripcion||''}</p>
+     </div>
+     <div class="grid2" style="margin-bottom:12px">
+       <div class="metric"><p class="mlbl">Productos</p><p class="mnum">${pList.length}</p></div>
+       <div class="metric"><p class="mlbl">Unidades totales</p><p class="mnum">${totalUnits}</p></div>
+     </div>
+     ${pList.length ? `<div class="table-wrap"><table>
+       <thead><tr><th>Código</th><th>Producto</th><th>Unidades</th></tr></thead>
+       <tbody>${pList.map(p=>`<tr>
+         <td><span class="code-badge">${p.codigo}</span></td>
+         <td style="font-size:12px">${p.producto}</td>
+         <td><strong>${p.total}</strong></td>
+       </tr>`).join('')}</tbody>
+     </table></div>` : '<p style="color:var(--text2);text-align:center;padding:1rem">Sin conteos en esta tarima</p>'}`,
+    [{label:'Cerrar', cls:'btn', fn:'closeModal()'}]
+  );
+}
+
+function renderTarimas(){
+  const q   = (document.getElementById('tarimaBusqueda').value||'').toLowerCase();
+  const est = document.getElementById('tarimaFiltroEstado').value;
+  const filtered = tarimas.filter(t =>
+    (!q || t.codigo.toLowerCase().includes(q) || t.responsable.toLowerCase().includes(q) || (t.descripcion||'').toLowerCase().includes(q)) &&
+    (!est || t.estado === est)
+  );
+  const wrap = document.getElementById('tarimList');
+  if(!filtered.length){
+    wrap.innerHTML = '<div class="empty"><i class="ti ti-stack-2"></i>Sin tarimas registradas</div>';
+    return;
+  }
+  const role = ROLES[currentUser.role];
+  wrap.innerHTML = filtered.map(t => {
+    const items = counts.filter(c=>c.tarimaId===t.id);
+    const prods = new Set(items.map(c=>c.codigo)).size;
+    const units = items.reduce((s,c)=>s+c.cantidad,0);
+    return `<div class="tarima-card">
+      <div class="tarima-header">
+        <div>
+          <p class="code-badge" style="display:inline-block;margin-bottom:6px">${t.codigo}</p>
+          <p style="font-weight:600;font-size:14px">${t.responsable}</p>
+          ${t.descripcion?`<p style="font-size:12px;color:var(--text2)">${t.descripcion}</p>`:''}
+        </div>
+        <span class="badge ${t.estado==='abierta'?'green':'gray'}">${t.estado}</span>
+      </div>
+      <div class="grid3" style="margin:8px 0">
+        <div class="metric" style="padding:.6rem"><p class="mlbl">Productos</p><p class="mnum" style="font-size:16px">${prods}</p></div>
+        <div class="metric" style="padding:.6rem"><p class="mlbl">Unidades</p><p class="mnum" style="font-size:16px">${units}</p></div>
+        <div class="metric" style="padding:.6rem"><p class="mlbl">Conteos</p><p class="mnum" style="font-size:16px">${items.length}</p></div>
+      </div>
+      <p style="font-size:11px;color:var(--text3)">Creada por ${t.creadoPor} el ${new Date(t.creadoEn).toLocaleDateString('es-SV')}</p>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn sm" onclick="verDetalleTarima('${t.id}')"><i class="ti ti-eye"></i> Ver detalle</button>
+        ${role.canTarima?`
+          <button class="btn sm" onclick="abrirModalTarima('${t.id}')"><i class="ti ti-edit"></i> Editar</button>
+          <button class="btn sm ${t.estado==='abierta'?'danger':''}" onclick="cerrarTarima('${t.id}')">
+            <i class="ti ti-${t.estado==='abierta'?'lock':'lock-open'}"></i> ${t.estado==='abierta'?'Cerrar':'Abrir'}
+          </button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+//  CONTEO
+// ════════════════════════════════════════════
+function genCode(){
+  const now = new Date();
+  const dd  = String(now.getDate()).padStart(2,'0');
+  const mm  = String(now.getMonth()+1).padStart(2,'0');
+  const today = counts.filter(c => {
+    const d = new Date(c.ts);
+    return d.getDate()===now.getDate() && d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+  }).length;
+  return `${mm}-${dd}-${String(today+1).padStart(3,'0')}`;
+}
+
+function filterConteoSearch(){
+  const q  = document.getElementById('conteoSearch').value.toLowerCase().trim();
+  const dd = document.getElementById('conteoDropdown');
+  if(!q || !catalog.length){ dd.style.display='none'; return; }
+  const res = catalog.filter(p =>
+    p.codigo.toLowerCase().includes(q) || p.producto.toLowerCase().includes(q)
+  ).slice(0,14);
+  if(!res.length){ dd.style.display='none'; return; }
+  dd.style.display = 'block';
+  dd.innerHTML = res.map(p =>
+    `<div class="dropdown-item" onclick="selectProductConteo('${p.codigo}')" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+       <div>
+         <span style="font-family:var(--mono);font-size:13px;font-weight:600;color:var(--blue-text)">${p.codigo}</span>
+         <span style="color:var(--text2);font-size:12px;margin-left:8px">${p.producto}</span>
+       </div>
+       <span style="font-size:11px;color:var(--text3);flex-shrink:0">exist: ${p.existencia}</span>
+     </div>`
+  ).join('');
+}
+
+function selectProductConteo(codigo){
+  const p = catalog.find(x => x.codigo===codigo);
+  if(!p) return;
+  selectedForConteo = p;
+  document.getElementById('conteoSearch').value = p.codigo;
+  document.getElementById('conteoDropdown').style.display = 'none';
+  // Llenar campo producto automático
+  const display = document.getElementById('productoAutoDisplay');
+  const text    = document.getElementById('productoAutoText');
+  display.style.background  = 'var(--blue-light)';
+  display.style.borderColor = 'var(--blue-text)';
+  text.style.color      = 'var(--blue-text)';
+  text.style.fontStyle  = 'normal';
+  text.style.fontWeight = '600';
+  text.innerHTML = `${p.producto} <span style="font-weight:400;font-size:12px;opacity:.7;font-family:var(--mono)">— exist. sistema: ${p.existencia}</span>`;
+  // Ocultar código generado anterior
+  document.getElementById('codigoConteoGenerado').style.display = 'none';
+  // Focus en cantidad
+  document.getElementById('cantidadContada').focus();
+}
+
+function registrarConteo(){
+  if(!selectedForConteo){ showNotif('Selecciona un producto primero','danger'); return; }
+  const qty = parseInt(document.getElementById('cantidadContada').value);
+  if(isNaN(qty) || qty < 0){ showNotif('Ingresa una cantidad válida','danger'); return; }
+
+  // Mantener campos internos que el resto del sistema necesita
+  const tipo     = 'tarima'; // valor por defecto simplificado
+  const nota     = '';
+  const tarimaId = '';
+  const tarima   = null;
+  const code     = genCode();
+
+  const entry = {
+    id: 'C' + Date.now(),
+    ubicacion: code,
+    tipo,
+    tarimaId: null,
+    tarimaCodigo: null,
+    codigo:     selectedForConteo.codigo,
+    producto:   selectedForConteo.producto,
+    existencia: selectedForConteo.existencia,
+    cantidad:   qty,
+    nota,
+    usuario:    currentUser.name,
+    usuarioId:  currentUser.id,
+    ts:         new Date().toISOString(),
+    editado:    false,
+    editadoPor: '',
+    historial:  []
+  };
+  counts.push(entry);
+  saveCountsSync(entry);
+  logAudit('CONTEO', null, entry, `Conteo ${code}: ${entry.producto} x${qty}`);
+  showToastConteo(entry);
+
+  // Mostrar código generado prominentemente
+  document.getElementById('codigoConteoVal').textContent = code;
+  document.getElementById('codigoConteoGenerado').style.display = 'block';
+
+  // Limpiar campos para próximo conteo, pero dejar visible el código
+  document.getElementById('cantidadContada').value = '';
+  // Reset campo producto
+  const display = document.getElementById('productoAutoDisplay');
+  const text    = document.getElementById('productoAutoText');
+  display.style.background  = '';
+  display.style.borderColor = '';
+  text.style.color      = '';
+  text.style.fontStyle  = 'italic';
+  text.style.fontWeight = 'normal';
+  text.innerHTML = 'Se llenará al seleccionar el código';
+  // Reset búsqueda
+  document.getElementById('conteoSearch').value = '';
+  selectedForConteo = null;
+  renderConteoList();
+  // Focus al input de código para escanear el siguiente
+  document.getElementById('conteoSearch').focus();
+}
+
+// Toast de confirmación avanzado
+function showToastConteo(entry){
+  document.getElementById('toastBody').innerHTML = `
+    <div class="toast-row"><span class="lbl">Código tarima</span><span class="val" style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--green-text)">${entry.ubicacion}</span></div>
+    <div class="toast-row"><span class="lbl">SKU</span><span class="val">${entry.codigo}</span></div>
+    <div class="toast-row"><span class="lbl">Producto</span><span class="val">${entry.producto}</span></div>
+    <div class="toast-row"><span class="lbl">Cantidad</span><span class="val">${entry.cantidad}</span></div>
+    <div class="toast-row"><span class="lbl">Hora</span><span class="val">${new Date(entry.ts).toLocaleTimeString('es-SV')}</span></div>
+  `;
+  const t = document.getElementById('toastConfirm');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 5000);
+}
+
+function renderConteoList(){
+  const q      = (document.getElementById('conteoListSearch').value||'').toLowerCase();
+  const fUser  = document.getElementById('filterUsuario').value;
+  const fTar   = document.getElementById('filterTarima').value;
+  const fFecha = document.getElementById('filterFecha').value;
+  const filtered = counts.filter(c => {
+    const matchQ   = !q || c.producto.toLowerCase().includes(q) || c.ubicacion.includes(q) || c.codigo.toLowerCase().includes(q) || (c.tarimaCodigo||'').toLowerCase().includes(q);
+    const matchU   = !fUser  || c.usuarioId===fUser;
+    const matchT   = !fTar   || c.tarimaId===fTar;
+    const matchF   = !fFecha || c.ts.startsWith(fFecha);
+    return matchQ && matchU && matchT && matchF;
+  });
+  document.getElementById('totalConteos').textContent = counts.length + ' registros';
+  if(!filtered.length){
+    document.getElementById('conteoList').innerHTML =
+      `<div class="empty"><i class="ti ti-clipboard"></i>${counts.length ? 'Sin resultados para el filtro' : 'Sin conteos registrados'}</div>`;
+    return;
+  }
+  const role   = ROLES[currentUser.role];
+  const sorted = [...filtered].sort((a,b) => b.ts.localeCompare(a.ts));
+  document.getElementById('conteoList').innerHTML = sorted.map(c => {
+    const tarima = tarimas.find(t=>t.id===c.tarimaId);
+    return `<div class="card" style="margin-bottom:8px">
+      <div class="row-between" style="margin-bottom:6px;flex-wrap:wrap;gap:4px">
+        <span class="code-badge">${c.ubicacion}</span>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <span class="badge ${c.tipo==='tarima'?'amber':c.tipo==='estante'?'blue':'gray'}">${c.tipo}</span>
+          ${tarima ? `<span class="badge purple"><i class="ti ti-stack-2" style="font-size:10px"></i> ${tarima.codigo}</span>` : ''}
+        </div>
+      </div>
+      <p style="font-weight:600;font-size:14px;margin-bottom:4px">${c.producto}</p>
+      <div class="row-between" style="flex-wrap:wrap;gap:4px">
+        <span style="font-size:12px;color:var(--text2)">Cód. ${c.codigo} | Por: ${c.usuario}</span>
+        <span style="font-size:13px">Contado: <strong>${c.cantidad}</strong></span>
+      </div>
+      <p style="font-size:11px;color:var(--text3)">${new Date(c.ts).toLocaleString('es-SV')}</p>
+      ${c.nota ? `<p style="font-size:12px;color:var(--text2);margin-top:4px"><i class="ti ti-note"></i> ${c.nota}</p>` : ''}
+      ${c.editado ? `<span class="badge amber" style="margin-top:4px;font-size:11px"><i class="ti ti-pencil" style="font-size:10px"></i> Editado por ${c.editadoPor}</span>` : ''}
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+        ${role.canEdit   ? `<button class="btn sm" onclick="editarConteo('${c.id}')"><i class="ti ti-edit"></i> Editar</button>` : ''}
+        ${role.canDelete ? `<button class="btn sm danger" onclick="eliminarConteo('${c.id}')"><i class="ti ti-trash"></i> Eliminar</button>` : ''}
+        ${c.historial && c.historial.length ? `<button class="btn sm" onclick="verHistConteo('${c.id}')"><i class="ti ti-history"></i> Historial</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editarConteo(id){
+  const c = counts.find(x=>String(x.id)===String(id));
+  if(!c) return;
+  const role = ROLES[currentUser.role];
+  if(!role.canEdit){ showNotif('Sin permiso para editar','danger'); return; }
+  openModal(
+    '<i class="ti ti-edit"></i> Editar conteo',
+    `<div style="margin-bottom:12px;padding:10px;background:var(--bg2);border-radius:var(--radius)">
+       <p style="font-weight:600">${c.producto}</p>
+       <p style="font-size:12px;color:var(--text2)">Ubicación: ${c.ubicacion}</p>
+     </div>
+     <div class="field"><label>Nueva cantidad</label>
+       <input type="number" id="mEditQty" value="${c.cantidad}" min="0" inputmode="numeric" />
+     </div>
+     <div class="field"><label>Nota de edición</label>
+       <input id="mEditNota" placeholder="Motivo del cambio..." />
+     </div>`,
+    [
+      {label:'Cancelar', cls:'btn', fn:'closeModal()'},
+      {label:'Guardar', cls:'btn primary', fn:`confirmarEditarConteo('${id}')`}
+    ]
+  );
+}
+
+function confirmarEditarConteo(id){
+  const c = counts.find(x=>String(x.id)===String(id));
+  if(!c) return;
+  const val  = parseInt(document.getElementById('mEditQty').value);
+  const nota = document.getElementById('mEditNota').value.trim();
+  if(isNaN(val)||val<0){ alert('Cantidad inválida'); return; }
+  const prev = c.cantidad;
+  if(!c.historial) c.historial = [];
+  c.historial.push({ts:new Date().toISOString(), usuario:currentUser.name, cantAnterior:prev, cantNueva:val, nota});
+  c.cantidad   = val;
+  c.editado    = true;
+  c.editadoPor = currentUser.name;
+  saveCountsSync(c);
+  logAudit('EDITAR_CONTEO', {id:c.id, cantidad:prev}, {id:c.id, cantidad:val}, nota);
+  closeModal();
+  renderConteoList();
+  renderComparacion();
+  showNotif('Conteo actualizado','success');
+}
+
+function eliminarConteo(id){
+  const role = ROLES[currentUser.role];
+  if(!role.canDelete){ showNotif('Sin permiso para eliminar','danger'); return; }
+  const c = counts.find(x=>String(x.id)===String(id));
+  if(!c) return;
+  openModal(
+    '<i class="ti ti-trash"></i> Confirmar eliminación',
+    `<p>¿Eliminar el conteo de <strong>${c.producto}</strong> (${c.cantidad} uds) en ubicación <strong>${c.ubicacion}</strong>?</p>
+     <p style="font-size:12px;color:var(--danger);margin-top:8px">Esta acción queda registrada en auditoría.</p>`,
+    [
+      {label:'Cancelar', cls:'btn', fn:'closeModal()'},
+      {label:'Eliminar', cls:'btn danger', fn:`confirmarEliminar('${id}')`}
+    ]
+  );
+}
+
+function confirmarEliminar(id){
+  const c = counts.find(x=>String(x.id)===String(id));
+  if(c) logAudit('ELIMINAR_CONTEO', c, null, `Eliminado por ${currentUser.name}`);
+  fbDeleteCount(id);
+  closeModal();
+  renderConteoList();
+  renderComparacion();
+  showNotif('Conteo eliminado','danger');
+}
+
+function verHistConteo(id){
+  const c = counts.find(x=>String(x.id)===String(id));
+  if(!c||!c.historial||!c.historial.length) return;
+  openModal(
+    '<i class="ti ti-history"></i> Historial de ediciones',
+    `<p style="margin-bottom:10px"><strong>${c.producto}</strong></p>` +
+    c.historial.map(h=>`
+      <div style="padding:8px;background:var(--bg2);border-radius:var(--radius);margin-bottom:6px;font-size:12px">
+        <div class="row-between"><span>${h.cantAnterior} → <strong>${h.cantNueva}</strong></span><span class="badge gray">${h.usuario}</span></div>
+        <p style="color:var(--text2);margin-top:2px">${new Date(h.ts).toLocaleString('es-SV')}</p>
+        ${h.nota?`<p style="color:var(--text2)">${h.nota}</p>`:''}
+      </div>`).join(''),
+    [{label:'Cerrar', cls:'btn', fn:'closeModal()'}]
+  );
+}
+
+// ════════════════════════════════════════════
+//  RECONTEO
+// ════════════════════════════════════════════
+function filterReconteoSearch(){
+  const q  = document.getElementById('reconteoSearch').value.toLowerCase();
+  const dd = document.getElementById('reconteoDropdown');
+  if(!q){ dd.style.display='none'; document.getElementById('reconteoUbicaciones').innerHTML=''; return; }
+  const codigosContados = [...new Set(counts.map(c=>c.codigo))];
+  const listed = catalog.filter(p =>
+    codigosContados.includes(p.codigo) &&
+    (p.codigo.toLowerCase().includes(q) || p.producto.toLowerCase().includes(q))
+  ).slice(0,14);
+  if(!listed.length){
+    dd.style.display='none';
+    document.getElementById('reconteoUbicaciones').innerHTML = '<div class="empty"><i class="ti ti-search"></i>No hay conteos para este producto</div>';
+    return;
+  }
+  dd.style.display='block';
+  dd.innerHTML = listed.map(p =>
+    `<div class="dropdown-item" onclick="selectProductReconteo('${p.codigo}')">
+       <span style="color:var(--text2);font-family:var(--mono);font-size:11px">${p.codigo}</span>
+       &nbsp;${p.producto}
+     </div>`
+  ).join('');
+}
+
+function selectProductReconteo(codigo){
+  const p = catalog.find(x=>x.codigo===codigo)||{codigo,producto:codigo};
+  document.getElementById('reconteoSearch').value = p.producto;
+  document.getElementById('reconteoDropdown').style.display = 'none';
+  renderReconteoUbicaciones(codigo);
+}
+
+function renderReconteoUbicaciones(codigo){
+  const ubicaciones = counts.filter(c=>c.codigo===codigo);
+  const wrap = document.getElementById('reconteoUbicaciones');
+  if(!ubicaciones.length){
+    wrap.innerHTML = '<div class="empty"><i class="ti ti-clipboard"></i>Sin conteos para este producto</div>';
+    return;
+  }
+  const role = ROLES[currentUser.role];
+  wrap.innerHTML = `<p style="font-weight:600;margin-bottom:10px">Ubicaciones registradas (${ubicaciones.length})</p>` +
+    ubicaciones.map(c => {
+      const tarima = tarimas.find(t=>t.id===c.tarimaId);
+      return `<div class="card" style="margin-bottom:8px">
+        <div class="row-between" style="margin-bottom:6px;flex-wrap:wrap;gap:4px">
+          <span class="code-badge">${c.ubicacion}</span>
+          <div style="display:flex;gap:4px">
+            <span class="badge ${c.tipo==='tarima'?'amber':'blue'}">${c.tipo}</span>
+            ${tarima ? `<span class="badge purple">${tarima.codigo}</span>` : ''}
+          </div>
+        </div>
+        <div class="row-between">
+          <span style="font-size:13px">Contado: <strong>${c.cantidad}</strong></span>
+          <span style="font-size:12px;color:var(--text2)">Por: ${c.usuario}</span>
+        </div>
+        ${c.nota ? `<p style="font-size:12px;color:var(--text2);margin-top:4px">${c.nota}</p>` : ''}
+        ${c.editado ? `<span class="badge amber" style="font-size:11px">Editado por ${c.editadoPor}</span>` : ''}
+        ${role.canEdit ? `<div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+          <input type="number" id="rec_${c.id}" value="${c.cantidad}" min="0" style="width:140px" inputmode="numeric" />
+          <button class="btn sm primary" onclick="guardarReconteo('${c.id}', '${codigo}')">
+            <i class="ti ti-check"></i> Guardar
+          </button>
+        </div>` : ''}
+      </div>`;
+    }).join('');
+}
+
+function guardarReconteo(id, codigo){
+  const el  = document.getElementById('rec_'+id);
+  const val = parseInt(el.value);
+  if(isNaN(val)||val<0){ alert('Cantidad inválida'); return; }
+  const c = counts.find(x=>String(x.id)===String(id));
+  if(!c) return;
+  const prev = c.cantidad;
+  if(!c.historial) c.historial = [];
+  c.historial.push({ts:new Date().toISOString(), usuario:currentUser.name, cantAnterior:prev, cantNueva:val, nota:'Reconteo'});
+  c.cantidad   = val;
+  c.editado    = true;
+  c.editadoPor = currentUser.name;
+  saveCountsSync(c);
+  logAudit('RECONTEO', {id:c.id, cantidad:prev}, {id:c.id, cantidad:val}, `Reconteo por ${currentUser.name}`);
+  renderReconteoUbicaciones(codigo);
+  renderConteoList();
+  showNotif('Reconteo guardado','success');
+}
+
+// ════════════════════════════════════════════
+//  PENDIENTES
+// ════════════════════════════════════════════
+function renderPendientes(){
+  const q        = (document.getElementById('pendSearch').value||'').toLowerCase();
+  const contados = new Set(counts.map(c=>c.codigo));
+  const pendList = catalog.filter(p => !contados.has(p.codigo) && (!q || p.producto.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q)));
+  const pct      = catalog.length ? Math.round(contados.size / catalog.length * 100) : 0;
+  document.getElementById('pendPct').textContent          = pct+'%';
+  document.getElementById('pendProgFill').style.width     = pct+'%';
+  document.getElementById('pendTotalCatalogo').textContent = catalog.length;
+  document.getElementById('pendContados').textContent     = contados.size;
+  document.getElementById('pendPendientes').textContent   = catalog.length - contados.size;
+  const wrap = document.getElementById('pendList');
+  if(!catalog.length){
+    wrap.innerHTML = '<div class="empty"><i class="ti ti-upload"></i>Carga el CSV para ver los pendientes</div>';
+    return;
+  }
+  if(!pendList.length){
+    wrap.innerHTML = q ? '<div class="empty"><i class="ti ti-check"></i>Sin resultados</div>'
+                       : '<div class="empty" style="color:var(--green)"><i class="ti ti-circle-check"></i>¡Todos los productos han sido contados!</div>';
+    return;
+  }
+  wrap.innerHTML = `<p style="font-size:13px;color:var(--text2);margin-bottom:10px">Mostrando ${pendList.length} producto(s) pendiente(s)</p>` +
+    pendList.slice(0,200).map(p => `
+      <div class="card" style="margin-bottom:6px;padding:.75rem 1rem">
+        <div class="row-between">
+          <div>
+            <span class="code-badge">${p.codigo}</span>
+            <p style="font-weight:500;font-size:13px;margin-top:4px">${p.producto}</p>
+          </div>
+          <div style="text-align:right">
+            <p style="font-size:12px;color:var(--text2)">Sistema</p>
+            <p style="font-weight:600;font-size:15px">${p.existencia}</p>
+          </div>
+        </div>
+      </div>`
+    ).join('') +
+    (pendList.length > 200 ? `<p style="font-size:12px;color:var(--text2);text-align:center;padding:.5rem">... y ${pendList.length-200} más</p>` : '');
+}
+
+// ════════════════════════════════════════════
+//  COMPARACIÓN
+// ════════════════════════════════════════════
+function renderComparacion(){
+  const q      = (document.getElementById('compSearch').value||'').toLowerCase();
+  const filtro = document.getElementById('compFiltro').value;
+
+  // Agrupar conteos por código
+  const grouped = {};
+  counts.forEach(c => {
+    if(!grouped[c.codigo]) {
+      // Buscar existencia en catalogExistencias; si no está = 0
+      const catItem   = catalogExistencias.find(x=>x.codigo===c.codigo);
+      const existencia = catItem ? catItem.existencia : 0;
+      grouped[c.codigo] = { codigo:c.codigo, producto:c.producto, existencia, total:0, ubicaciones:[], sinExistencia:!catItem };
+    }
+    grouped[c.codigo].total += c.cantidad;
+    grouped[c.codigo].ubicaciones.push(c);
+  });
+
+  let items = Object.values(grouped).filter(g =>
+    !q || g.producto.toLowerCase().includes(q) || g.codigo.toLowerCase().includes(q)
+  );
+  if(filtro==='diff') items = items.filter(g=>g.total!==g.existencia);
+  else if(filtro==='ok')  items = items.filter(g=>g.total===g.existencia);
+  else if(filtro==='pos') items = items.filter(g=>g.total>g.existencia);
+  else if(filtro==='neg') items = items.filter(g=>g.total<g.existencia);
+
+  const withDiff = items.filter(g=>g.total!==g.existencia).length;
+  document.getElementById('statTotal').textContent  = items.length;
+  document.getElementById('statDiff').textContent   = withDiff;
+  document.getElementById('statMatch').textContent  = items.length - withDiff;
+
+  // Aviso si no hay catálogo de existencias cargado
+  const noExistCSV = !catalogExistencias.length;
+
+  if(!items.length){
+    document.getElementById('compList').innerHTML =
+      `<div class="empty"><i class="ti ti-list-check"></i>${counts.length ? 'Sin resultados para el filtro' : 'Registra conteos para ver la comparación'}</div>`;
+    document.getElementById('csvNote').textContent = noExistCSV ? '⚠ Catálogo de existencias no cargado — ve a CSV para subirlo' : `Catálogo existencias: ${catalogExistencias.length} productos`;
+    return;
+  }
+
+  document.getElementById('csvNote').textContent = noExistCSV
+    ? `⚠ Sin catálogo de existencias — las diferencias muestran 0 como base`
+    : `Catálogo existencias: ${catalogExistencias.length} prods | Conteos: ${items.length}`;
+
+  document.getElementById('compList').innerHTML = items
+    .sort((a,b) => Math.abs(b.total-b.existencia)-Math.abs(a.total-a.existencia))
+    .map(g => {
+      const diff    = g.total - g.existencia;
+      const diffCls = diff===0 ? '' : (diff>0 ? 'diff-pos' : 'diff-neg');
+      const diffStr = diff===0 ? '—' : (diff>0?'+':'')+diff;
+      return `<div class="card" style="margin-bottom:8px">
+        <div class="row-between" style="margin-bottom:6px;flex-wrap:wrap;gap:8px">
+          <div>
+            <span style="font-size:12px;font-family:var(--mono);color:var(--text2)">${g.codigo}</span>
+            ${g.sinExistencia ? `<span class="badge gray" style="margin-left:6px;font-size:10px">sin exist.</span>` : ''}
+            <p style="font-weight:600;font-size:14px">${g.producto}</p>
+          </div>
+          <div style="text-align:right">
+            <p style="font-size:12px;color:var(--text2)">Sistema: ${g.sinExistencia ? '—' : g.existencia}</p>
+            <p style="font-size:14px;font-weight:600">Contado: ${g.total}</p>
+            <p style="font-size:14px;font-weight:600" class="${diffCls}">Diff: ${g.sinExistencia ? 'N/A' : diffStr}</p>
+          </div>
+        </div>
+        <details style="margin-top:6px">
+          <summary>${g.ubicaciones.length} ubicación(es)</summary>
+          <div style="margin-top:8px">
+            ${g.ubicaciones.map(u=>{
+              const tar = tarimas.find(t=>t.id===u.tarimaId);
+              return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:13px;flex-wrap:wrap;gap:4px">
+                <span class="code-badge">${u.ubicacion}</span>
+                <span class="badge ${u.tipo==='tarima'?'amber':'blue'}">${u.tipo}</span>
+                ${tar?`<span class="badge purple">${tar.codigo}</span>`:''}
+                <span><strong>${u.cantidad}</strong></span>
+                <span style="color:var(--text2)">${u.usuario}</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </details>
+      </div>`;
+    }).join('');
+}
+
+// ════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════
+function renderDashboard(){
+  const grouped = {};
+  counts.forEach(c => {
+    if(!grouped[c.codigo]) grouped[c.codigo]={codigo:c.codigo, producto:c.producto, existencia:c.existencia, total:0, ubicaciones:[]};
+    grouped[c.codigo].total += c.cantidad;
+    grouped[c.codigo].ubicaciones.push(c);
+  });
+  const items      = Object.values(grouped);
+  const withDiff   = items.filter(g=>g.total!==g.existencia);
+  const noDiff     = items.filter(g=>g.total===g.existencia);
+  const contados   = new Set(counts.map(c=>c.codigo)).size;
+  const pct        = catalog.length ? Math.round(contados/catalog.length*100) : 0;
+  const tarim_ab   = tarimas.filter(t=>t.estado==='abierta').length;
+  const tarim_ce   = tarimas.filter(t=>t.estado==='cerrada').length;
+  const totalUnits = counts.reduce((s,c)=>s+c.cantidad,0);
+  const activeUs   = [...new Set(counts.map(c=>c.usuarioId))].length;
+  const porTipo    = {tarima:0, estante:0, piso:0, otro:0};
+  counts.forEach(c => { porTipo[c.tipo] = (porTipo[c.tipo]||0)+1; });
+
+  document.getElementById('dash-metrics').innerHTML = `
+    <div class="metric"><p class="mlbl"><i class="ti ti-package" style="font-size:14px"></i>En catálogo</p><p class="mnum">${catalog.length||'—'}</p><p class="msub">productos cargados</p></div>
+    <div class="metric"><p class="mlbl"><i class="ti ti-clipboard-check" style="font-size:14px"></i>Contados</p><p class="mnum" style="color:var(--green)">${contados}</p><p class="msub">${pct}% del catálogo</p></div>
+    <div class="metric"><p class="mlbl"><i class="ti ti-clock-pause" style="font-size:14px"></i>Pendientes</p><p class="mnum" style="color:var(--danger)">${(catalog.length||0)-contados}</p><p class="msub">${100-pct}% sin contar</p></div>
+    <div class="metric"><p class="mlbl"><i class="ti ti-trending-up" style="font-size:14px"></i>Avance</p><p class="mnum">${pct}%</p><div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div></div>
+  `;
+  document.getElementById('dash-metrics2').innerHTML = `
+    <div class="metric"><p class="mlbl"><i class="ti ti-alert-triangle" style="font-size:14px"></i>Con diferencia</p><p class="mnum" style="color:#A32D2D">${withDiff.length}</p><p class="msub">${items.length?Math.round(withDiff.length/items.length*100):0}% del contado</p></div>
+    <div class="metric"><p class="mlbl"><i class="ti ti-stack-2" style="font-size:14px"></i>Tarimas abiertas</p><p class="mnum" style="color:var(--green)">${tarim_ab}</p><p class="msub">${tarim_ce} cerradas</p></div>
+    <div class="metric"><p class="mlbl"><i class="ti ti-sum" style="font-size:14px"></i>Unidades contadas</p><p class="mnum">${totalUnits.toLocaleString('es-SV')}</p><p class="msub">unidades totales</p></div>
+    <div class="metric"><p class="mlbl"><i class="ti ti-user-check" style="font-size:14px"></i>Usuarios activos</p><p class="mnum">${activeUs}</p><p class="msub">con conteos</p></div>
+  `;
+
+  const isDark    = document.body.dataset.theme==='dark' || (document.body.dataset.theme==='auto' && matchMedia('(prefers-color-scheme:dark)').matches);
+  const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+  const textColor = isDark ? '#a0a09a' : '#6b6b67';
+  Chart.defaults.color = textColor;
+  Chart.defaults.font.family = 'system-ui,sans-serif';
+  Chart.defaults.font.size = 12;
+
+  if(dashCharts.tipo) dashCharts.tipo.destroy();
+  dashCharts.tipo = new Chart(document.getElementById('chartTipo'),{
+    type:'bar',
+    data:{labels:['Tarima','Estante','Piso','Otro'],datasets:[{data:[porTipo.tarima||0,porTipo.estante||0,porTipo.piso||0,porTipo.otro||0],backgroundColor:['#1D9E75','#378ADD','#F59E0B','#8B5CF6'],borderRadius:4,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:gridColor},ticks:{color:textColor}},y:{grid:{color:gridColor},ticks:{color:textColor,stepSize:1}}}}
+  });
+
+  if(dashCharts.diff) dashCharts.diff.destroy();
+  dashCharts.diff = new Chart(document.getElementById('chartDiff'),{
+    type:'doughnut',
+    data:{labels:['Sin diferencia','Con diferencia'],datasets:[{data:[noDiff.length||0,withDiff.length||0],backgroundColor:['#1D9E75','#E24B4A'],borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+ctx.raw}}}}
+  });
+
+  const top8      = [...withDiff].sort((a,b)=>Math.abs(b.total-b.existencia)-Math.abs(a.total-a.existencia)).slice(0,8);
+  const topLabels = top8.map(g=>g.producto.length>22?g.producto.slice(0,20)+'…':g.producto);
+  const topData   = top8.map(g=>g.total-g.existencia);
+  const topColors = topData.map(v=>v>=0?'#1D9E75':'#E24B4A');
+  const barH      = Math.max(180, top8.length*44+60);
+  document.getElementById('chartTopWrap').style.height = barH+'px';
+  if(dashCharts.top) dashCharts.top.destroy();
+  dashCharts.top = new Chart(document.getElementById('chartTop'),{
+    type:'bar',
+    data:{labels:topLabels.length?topLabels:['Sin datos'],datasets:[{data:topData.length?topData:[0],backgroundColor:topColors,borderRadius:4,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:gridColor},ticks:{color:textColor}},y:{grid:{display:false},ticks:{color:textColor}}}}
+  });
+
+  const byUser = {};
+  counts.forEach(c=>{byUser[c.usuario]=(byUser[c.usuario]||0)+1;});
+  const userEntries = Object.entries(byUser).sort((a,b)=>b[1]-a[1]);
+  const maxU = userEntries.length ? userEntries[0][1] : 1;
+  document.getElementById('dashUserList').innerHTML = userEntries.length
+    ? userEntries.map(([u,n])=>`
+        <div class="row-item">
+          <span>${u}</span>
+          <div style="display:flex;align-items:center;gap:8px;flex:1;margin-left:12px">
+            <div class="prog-bar" style="flex:1"><div class="prog-fill" style="width:${Math.round(n/maxU*100)}%"></div></div>
+            <span style="font-weight:600;min-width:22px;text-align:right">${n}</span>
+          </div>
+        </div>`).join('')
+    : '<p style="color:var(--text3);text-align:center;padding:1rem">Sin conteos aún</p>';
+
+  const recent = [...counts].sort((a,b)=>b.ts.localeCompare(a.ts)).slice(0,5);
+  document.getElementById('dashRecentList').innerHTML = recent.length
+    ? recent.map(c=>`
+        <div class="row-item">
+          <div style="min-width:0">
+            <p style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px">${c.producto}</p>
+            <p style="font-size:11px;color:var(--text2)">${c.tarimaCodigo||c.ubicacion} · ${c.usuario}</p>
+          </div>
+          <span style="font-weight:600;margin-left:8px">${c.cantidad}</span>
+        </div>`).join('')
+    : '<p style="color:var(--text3);text-align:center;padding:1rem">Sin conteos aún</p>';
+
+  const foot = document.getElementById('dashFootNote');
+  if(counts.length){
+    const last = new Date(Math.max(...counts.map(c=>new Date(c.ts))));
+    foot.textContent = `Última actualización: ${last.toLocaleString('es-SV')}`;
+  } else {
+    foot.textContent = 'Carga el CSV y registra conteos para ver datos reales.';
+  }
+}
+
+// ════════════════════════════════════════════
+//  AUDITORÍA
+// ════════════════════════════════════════════
+function renderAuditoria(){
+  const q     = (document.getElementById('auditSearch').value||'').toLowerCase();
+  const fUser = document.getElementById('auditFiltroUser').value;
+  const fFech = document.getElementById('auditFiltroFecha').value;
+  const filtered = auditLog.filter(a =>
+    (!q || a.accion.toLowerCase().includes(q) || a.usuario.toLowerCase().includes(q) || (a.extra||'').toLowerCase().includes(q)) &&
+    (!fUser || a.usuarioId===fUser) &&
+    (!fFech || a.ts.startsWith(fFech))
+  );
+  document.getElementById('auditTotal').textContent = filtered.length + ' registros';
+  const wrap = document.getElementById('auditList');
+  if(!filtered.length){
+    wrap.innerHTML = '<div class="empty"><i class="ti ti-history"></i>Sin registros de auditoría</div>';
+    return;
+  }
+  const iconMap = {
+    'LOGIN':'ti-login','LOGOUT':'ti-logout','CONTEO':'ti-clipboard-plus',
+    'EDITAR_CONTEO':'ti-edit','ELIMINAR_CONTEO':'ti-trash','RECONTEO':'ti-refresh',
+    'CREAR_TARIMA':'ti-stack-2','EDITAR_TARIMA':'ti-edit','CAMBIO_ESTADO_TARIMA':'ti-lock',
+    'CREAR_USUARIO':'ti-user-plus','EDITAR_USUARIO':'ti-user-edit','DESACTIVAR_USUARIO':'ti-user-off',
+    'CAMBIO_PASSWORD':'ti-key','CARGAR_CSV':'ti-upload'
+  };
+  wrap.innerHTML = `<div class="card" style="padding:0;overflow:hidden">` +
+    filtered.slice(0,300).map(a=>{
+      const ico = iconMap[a.accion] || 'ti-circle';
+      return `<div class="audit-row">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <i class="ti ${ico}" style="font-size:16px;color:var(--green);margin-top:2px;flex-shrink:0"></i>
+          <div style="flex:1;min-width:0">
+            <div class="row-between">
+              <span class="au-action">${a.accion.replace(/_/g,' ')}</span>
+              <span class="badge gray" style="font-size:10px">${a.usuario}</span>
+            </div>
+            ${a.extra ? `<p class="au-meta">${a.extra}</p>` : ''}
+            ${a.anterior!==null && a.nuevo!==null ? `<p class="au-meta" style="font-size:11px"><span style="color:var(--danger)">Antes: ${a.anterior.slice(0,60)}</span> → <span style="color:var(--green)">${a.nuevo.slice(0,60)}</span></p>` : ''}
+            <p style="font-size:11px;color:var(--text3)">${new Date(a.ts).toLocaleString('es-SV')}</p>
+          </div>
+        </div>
+      </div>`;
+    }).join('') + `</div>` +
+    (filtered.length>300 ? `<p style="text-align:center;font-size:12px;color:var(--text2);padding:.5rem">Mostrando primeros 300 de ${filtered.length}</p>` : '');
+}
+
+// ════════════════════════════════════════════
+//  USUARIOS
+// ════════════════════════════════════════════
+function abrirModalUsuario(id){
+  const editing = id ? users.find(u=>u.id===id) : null;
+  openModal(
+    editing ? '<i class="ti ti-user-edit"></i> Editar Usuario' : '<i class="ti ti-user-plus"></i> Nuevo Usuario',
+    `<div class="field"><label>Nombre completo</label>
+      <input id="mUN" value="${editing?editing.name:''}" placeholder="Nombre..." /></div>
+     <div class="field"><label>Usuario (sin espacios)</label>
+      <input id="mUU" value="${editing?editing.username:''}" placeholder="ej: bodega3" ${editing?'readonly':''} /></div>
+     ${!editing?`<div class="field"><label>Contraseña (mín. 6 caracteres)</label>
+      <input type="password" id="mUP" placeholder="••••••" autocomplete="new-password" /></div>`:''}
+     <div class="field"><label>Rol</label>
+      <select id="mUR">
+        ${Object.entries(ROLES).map(([k,v])=>`<option value="${k}" ${editing&&editing.role===k?'selected':''}>${v.label}</option>`).join('')}
+      </select></div>
+     <div class="field" style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" id="mUA" style="width:auto" ${editing&&!editing.active?'':'checked'} />
+      <label style="margin:0">Usuario activo</label>
+     </div>`,
+    [
+      {label:'Cancelar', cls:'btn', fn:'closeModal()'},
+      {label: editing?'Guardar':'Crear', cls:'btn primary', fn: editing?`guardarEditUsuario('${id}')` : 'crearUsuario()'}
+    ]
+  );
+}
+
+function crearUsuario(){
+  const name   = document.getElementById('mUN').value.trim();
+  const user   = document.getElementById('mUU').value.trim().toLowerCase().replace(/\s+/g,'');
+  const pass   = document.getElementById('mUP').value;
+  const role   = document.getElementById('mUR').value;
+  const active = document.getElementById('mUA').checked;
+  if(!name||!user||!pass){ alert('Completa nombre, usuario y contraseña'); return; }
+  if(pass.length < 6){ alert('La contraseña debe tener al menos 6 caracteres'); return; }
+  if(users.find(u=>u.username===user)){ alert('Ese nombre de usuario ya existe'); return; }
+
+  // Crear en Firebase Auth usando cuenta secundaria (no afecta la sesión actual)
+  const email = _buildEmail(user);
+  const btnSave = document.querySelector('#modalFooter .btn.primary');
+  if(btnSave){ btnSave.disabled=true; btnSave.textContent='Creando...'; }
+
+  // Usamos fetch a la API REST de Firebase Auth para crear el usuario
+  // sin cerrar la sesión del admin actual
+  fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_CONFIG.apiKey}`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ email, password: pass, returnSecureToken: false })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if(data.error){
+      const msg = data.error.message === 'EMAIL_EXISTS' ? 'Ese usuario ya existe en el sistema' : data.error.message;
+      alert('Error al crear usuario: ' + msg);
+      if(btnSave){ btnSave.disabled=false; btnSave.textContent='Crear'; }
+      return;
+    }
+    const uid = data.localId;
+    const newU = { id: uid, username: user, email, role, name, active, createdAt: new Date().toISOString() };
+    users.push(newU);
+    // Guardar perfil en Firestore con el UID real de Auth
+    db.collection('usuarios').doc(uid).set(newU)
+      .then(() => {
+        localStorage.setItem(LS.users, JSON.stringify(users));
+        logAudit('CREAR_USUARIO', null, {username:user, role}, `Usuario ${name} creado`);
+        closeModal();
+        renderUsuarios();
+        populateFilters();
+        showNotif(`Usuario ${name} creado correctamente`, 'success');
+      })
+      .catch(e => { alert('Error guardando perfil: ' + e.message); });
+  })
+  .catch(e => { alert('Error de red al crear usuario: ' + e.message); if(btnSave){ btnSave.disabled=false; btnSave.textContent='Crear'; } });
+}
+
+function guardarEditUsuario(id){
+  const u = users.find(x=>x.id===id);
+  if(!u) return;
+  const prev = {...u};
+  u.name   = document.getElementById('mUN').value.trim();
+  u.role   = document.getElementById('mUR').value;
+  u.active = document.getElementById('mUA').checked;
+  saveUsersSync(u);
+  logAudit('EDITAR_USUARIO', prev, {...u}, `Usuario ${u.name} editado`);
+  closeModal();
+  renderUsuarios();
+  showNotif('Usuario actualizado','success');
+}
+
+function cambiarPassword(id){
+  openModal(
+    '<i class="ti ti-key"></i> Cambiar Contraseña',
+    `<div class="field"><label>Nueva contraseña</label><input type="password" id="mNP" placeholder="••••••" /></div>
+     <div class="field"><label>Confirmar</label><input type="password" id="mCP" placeholder="••••••" /></div>`,
+    [
+      {label:'Cancelar', cls:'btn', fn:'closeModal()'},
+      {label:'Cambiar', cls:'btn primary', fn:`confirmarCambioPass('${id}')`}
+    ]
+  );
+}
+
+function confirmarCambioPass(id){
+  const np = document.getElementById('mNP').value;
+  const cp = document.getElementById('mCP').value;
+  if(!np||np!==cp){ alert('Las contraseñas no coinciden o están vacías'); return; }
+  if(np.length < 6){ alert('La contraseña debe tener al menos 6 caracteres'); return; }
+  const u = users.find(x=>x.id===id);
+  if(!u) return;
+
+  const btnSave = document.querySelector('#modalFooter .btn.primary');
+  if(btnSave){ btnSave.disabled=true; btnSave.textContent='Actualizando...'; }
+
+  // Cambiar contraseña via API REST de Firebase Auth (no requiere sesión del usuario objetivo)
+  // Requiere que el admin esté autenticado — se usa el token del admin actual
+  auth.currentUser.getIdToken().then(adminToken => {
+    // Buscar el UID del usuario objetivo en Firebase Auth por email
+    return fetch(`https://identitytoolkit.googleapis.com/v1/accounts:update?key=${FIREBASE_CONFIG.apiKey}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        idToken: adminToken,  // solo funciona para el propio usuario; para otros usuarios usamos Admin SDK
+        // Para cambiar pass de otro usuario desde el cliente, usamos la API con localId
+        localId: id,
+        password: np,
+        returnSecureToken: false
+      })
+    });
+  })
+  .then(r => r.json())
+  .then(data => {
+    if(data.error){
+      // Si falla (no se puede cambiar pass de otro usuario desde cliente sin Admin SDK)
+      // Mostrar instrucción al admin
+      alert('Para cambiar la contraseña de otro usuario, hazlo desde Firebase Console:\nhttps://console.firebase.google.com/project/inventario-bodega-2ce87/authentication/users');
+      if(btnSave){ btnSave.disabled=false; btnSave.textContent='Cambiar'; }
+      return;
+    }
+    logAudit('CAMBIO_PASSWORD', null, null, `Cambio de contraseña de ${u.name}`);
+    closeModal();
+    showNotif('Contraseña actualizada','success');
+  })
+  .catch(e => {
+    if(btnSave){ btnSave.disabled=false; btnSave.textContent='Cambiar'; }
+    alert('Error al cambiar contraseña: ' + e.message);
+  });
+}
+
+function toggleUsuario(id){
+  const u = users.find(x=>x.id===id);
+  if(!u) return;
+  if(u.id===currentUser.id){ showNotif('No puedes desactivar tu propio usuario','danger'); return; }
+  const prev = u.active;
+  u.active = !u.active;
+  saveUsersSync(u);
+  logAudit('DESACTIVAR_USUARIO', {active:prev}, {active:u.active}, `Usuario ${u.name} ${u.active?'activado':'desactivado'}`);
+  renderUsuarios();
+  showNotif(`Usuario ${u.active?'activado':'desactivado'}`,'success');
+}
+
+function renderUsuarios(){
+  const wrap = document.getElementById('usuariosList');
+  if(!users.length){ wrap.innerHTML = '<div class="empty"><i class="ti ti-users"></i>Sin usuarios</div>'; return; }
+  wrap.innerHTML = users.map(u => {
+    const role = ROLES[u.role] || ROLES.consulta;
+    return `<div class="card" style="margin-bottom:8px">
+      <div class="row-between" style="flex-wrap:wrap;gap:6px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <p style="font-weight:600">${u.name}</p>
+            <span class="badge ${role.cls}">${role.label}</span>
+            ${!u.active?'<span class="badge danger">Inactivo</span>':''}
+          </div>
+          <p style="font-size:12px;color:var(--text2);font-family:var(--mono)">@${u.username}</p>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn sm" onclick="abrirModalUsuario('${u.id}')"><i class="ti ti-edit"></i> Editar</button>
+          <button class="btn sm" onclick="cambiarPassword('${u.id}')"><i class="ti ti-key"></i> Contraseña</button>
+          ${u.id!==currentUser.id?`<button class="btn sm ${u.active?'danger':''}" onclick="toggleUsuario('${u.id}')">
+            <i class="ti ti-${u.active?'user-off':'user-check'}"></i> ${u.active?'Desactivar':'Activar'}
+          </button>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+//  CSV
+// ════════════════════════════════════════════
+/* ── Catálogo maestro: codigo + producto ── */
+function loadCSVMaestro(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    const text   = ev.target.result;
+    const lines  = text.split('\n').filter(l=>l.trim());
+    const header = lines[0].replace(/^\uFEFF/,'').split(',').map(h=>h.trim().toLowerCase());
+    const ci = header.indexOf('codigo');
+    const pi = header.indexOf('producto');
+    if(ci<0||pi<0){
+      showCSVAlert('csvAlertMaestro','El CSV debe tener columnas: codigo, producto','error'); return;
+    }
+    const prev = catalog.length;
+    catalog = lines.slice(1).map(l=>{
+      const cols = l.split(',');
+      return { id:(cols[ci]||'').trim(), codigo:(cols[ci]||'').trim(), producto:(cols[pi]||'').trim() };
+    }).filter(p=>p.codigo&&p.producto);
+    saveCatalogSync();
+    logAudit('CARGAR_CSV_MAESTRO', {count:prev}, {count:catalog.length}, `Catálogo maestro: ${catalog.length} productos`);
+    showCSVAlert('csvAlertMaestro', `✓ ${catalog.length} productos cargados en el catálogo maestro`, 'success');
+    renderCSVPreviewMaestro();
+    renderAll();
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+/* ── Catálogo de existencias: codigo + producto + existencia ── */
+function loadCSVExistencias(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    const text   = ev.target.result;
+    const lines  = text.split('\n').filter(l=>l.trim());
+    const header = lines[0].replace(/^\uFEFF/,'').split(',').map(h=>h.trim().toLowerCase());
+    const ci = header.indexOf('codigo');
+    const pi = header.indexOf('producto');
+    const ei = header.indexOf('existencia');
+    if(ci<0||pi<0||ei<0){
+      showCSVAlert('csvAlertExist','El CSV debe tener columnas: codigo, producto, existencia','error'); return;
+    }
+    const prev = catalogExistencias.length;
+    catalogExistencias = lines.slice(1).map(l=>{
+      const cols = l.split(',');
+      return { codigo:(cols[ci]||'').trim(), producto:(cols[pi]||'').trim(), existencia:parseInt(cols[ei])||0 };
+    }).filter(p=>p.codigo&&p.producto);
+    saveCatalogExistSync();
+    logAudit('CARGAR_CSV_EXIST', {count:prev}, {count:catalogExistencias.length}, `Catálogo existencias: ${catalogExistencias.length} productos`);
+    showCSVAlert('csvAlertExist', `✓ ${catalogExistencias.length} productos cargados en el catálogo de existencias`, 'success');
+    renderCSVPreviewExist();
+    renderAll();
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function showCSVAlert(elId, msg, type){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `<div class="alert ${type}" style="margin-top:10px"><i class="ti ti-${type==='success'?'check':'alert-circle'}"></i> ${msg}</div>`;
+}
+
+function renderCSVPreviewMaestro(){
+  const wrap = document.getElementById('csvPreviewMaestro');
+  const badge = document.getElementById('badgeCatalogMaestro');
+  if(badge) badge.textContent = catalog.length ? `${catalog.length} productos` : 'Sin cargar';
+  if(!catalog.length){ wrap.innerHTML=''; return; }
+  const sample = catalog.slice(0,8);
+  wrap.innerHTML = `<div style="margin-top:12px">
+    <p style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px">Vista previa</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Código</th><th>Producto</th></tr></thead>
+      <tbody>${sample.map(p=>`<tr>
+        <td><span class="code-badge">${p.codigo}</span></td>
+        <td>${p.producto}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+    ${catalog.length>8?`<p style="font-size:12px;color:var(--text2);margin-top:6px">… y ${catalog.length-8} productos más</p>`:''}
+  </div>`;
+}
+
+function renderCSVPreviewExist(){
+  const wrap  = document.getElementById('csvPreviewExist');
+  const badge = document.getElementById('badgeCatalogExist');
+  if(badge) badge.textContent = catalogExistencias.length ? `${catalogExistencias.length} productos` : 'Sin cargar';
+  if(!catalogExistencias.length){ wrap.innerHTML=''; return; }
+  const sample = catalogExistencias.slice(0,8);
+  wrap.innerHTML = `<div style="margin-top:12px">
+    <p style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px">Vista previa</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Código</th><th>Producto</th><th>Existencia</th></tr></thead>
+      <tbody>${sample.map(p=>`<tr>
+        <td><span class="code-badge">${p.codigo}</span></td>
+        <td>${p.producto}</td>
+        <td style="font-weight:600">${p.existencia}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+    ${catalogExistencias.length>8?`<p style="font-size:12px;color:var(--text2);margin-top:6px">… y ${catalogExistencias.length-8} productos más</p>`:''}
+  </div>`;
+}
+
+// ════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════
+function renderAll(){
+  renderConteoList();
+  renderComparacion();
+  renderPendientes();
+  renderCSVPreviewMaestro();
+  renderCSVPreviewExist();
+}
+
+function populateFilters(){
+  // Guard: si los elementos del DOM no están disponibles aún (antes del login), salir
+  const fu = document.getElementById('filterUsuario');
+  const ft = document.getElementById('filterTarima');
+  const ts = document.getElementById('tarimaSel');
+  const au = document.getElementById('auditFiltroUser');
+  if(!fu || !ft || !ts || !au) return;
+  // Filtros de conteo
+  const prevU = fu.value; const prevT = ft.value;
+  fu.innerHTML = '<option value="">Todos los usuarios</option>' +
+    users.filter(u=>u.active).map(u=>`<option value="${u.id}" ${prevU===u.id?'selected':''}>${u.name}</option>`).join('');
+  ft.innerHTML = '<option value="">Todas las tarimas</option>' +
+    tarimas.map(t=>`<option value="${t.id}" ${prevT===t.id?'selected':''}>${t.codigo} - ${t.responsable}</option>`).join('');
+  // Selector de tarima en conteo
+  const prevTS = ts.value;
+  ts.innerHTML = '<option value="">— Sin tarima asignada —</option>' +
+    tarimas.filter(t=>t.estado==='abierta').map(t=>`<option value="${t.id}" ${prevTS===t.id?'selected':''}>${t.codigo} | ${t.responsable}</option>`).join('');
+  // Auditoría filtro usuario
+  const prevAU = au.value;
+  au.innerHTML = '<option value="">Todos los usuarios</option>' +
+    users.map(u=>`<option value="${u.id}" ${prevAU===u.id?'selected':''}>${u.name}</option>`).join('');
+}
+
+function showNotif(msg, type){
+  // type: 'success' | 'danger'
+  const n = document.createElement('div');
+  n.className = `alert ${type==='danger'?'error':'success'}`;
+  n.style.cssText = 'position:fixed;top:16px;right:16px;z-index:9999;max-width:280px;box-shadow:0 4px 16px rgba(0,0,0,0.15)';
+  n.innerHTML = `<i class="ti ti-${type==='danger'?'alert-circle':'check'}"></i> ${msg}`;
+  document.body.appendChild(n);
+  setTimeout(()=>n.remove(), 3000);
+}
+
+// Modal helpers
+function openModal(title, body, btns){
+  document.getElementById('modalTitle').innerHTML = title;
+  document.getElementById('modalBody').innerHTML  = body;
+  document.getElementById('modalFooter').innerHTML = btns.map(b=>
+    `<button class="${b.cls}" onclick="${b.fn}">${b.label}</button>`
+  ).join('');
+  document.getElementById('modalOverlay').style.display = 'flex';
+  // Focus primer input
+  setTimeout(()=>{ const el=document.querySelector('#modalBox input:not([readonly])'); if(el) el.focus(); },50);
+}
+function closeModal(){
+  document.getElementById('modalOverlay').style.display = 'none';
+}
+function closeModalOnOverlay(e){
+  if(e.target.id==='modalOverlay') closeModal();
+}
+
+// ════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════
+applyStoredTheme();
+document.getElementById('loginPass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+document.getElementById('loginUser').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('loginPass').focus(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+// Cerrar dropdowns al hacer click fuera
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#conteoSearch') && !e.target.closest('#conteoDropdown'))
+    document.getElementById('conteoDropdown').style.display='none';
+  if(!e.target.closest('#reconteoSearch') && !e.target.closest('#reconteoDropdown'))
+    document.getElementById('reconteoDropdown').style.display='none';
+});
+</script>
+
+<!-- ════════ ESTRUCTURA FIRESTORE RECOMENDADA ════════
+=======================================================
+COLECCIONES:
+
+/catalogo/{skuId}
+  - codigo      : string
+  - producto    : string
+  - existencia  : number
+  - cargadoPor  : string (uid)
+  - cargadoEn   : Timestamp
+
+/tarimas/{tarimaId}
+  - codigo       : string  (T-DDMM-XXXX)
+  - responsable  : string
+  - descripcion  : string
+  - estado       : "abierta" | "cerrada"
+  - creadoPor    : string (uid)
+  - creadoEn     : Timestamp
+
+/conteos/{conteoId}
+  - ubicacion    : string
+  - tipo         : "tarima" | "estante" | "piso" | "otro"
+  - tarimaId     : string | null
+  - tarimaCodigo : string | null
+  - codigo       : string (SKU)
+  - producto     : string
+  - existencia   : number
+  - cantidad     : number
+  - nota         : string
+  - usuario      : string (nombre)
+  - usuarioId    : string (uid)
+  - ts           : Timestamp
+  - editado      : boolean
+  - editadoPor   : string
+  - historial    : array[{ts, usuario, cantAnterior, cantNueva, nota}]
+
+/auditoria/{auditId}
+  - ts         : Timestamp
+  - usuario    : string
+  - usuarioId  : string (uid)
+  - accion     : string
+  - anterior   : string (JSON)
+  - nuevo      : string (JSON)
+  - extra      : string
+
+/usuarios/{userId}  ← complementa Firebase Auth
+  - name       : string
+  - username   : string
+  - role       : "admin"|"supervisor"|"conteador"|"consulta"
+  - active     : boolean
+  - createdAt  : Timestamp
+
+=======================================================
+REGLAS FIRESTORE (con Firebase Authentication real):
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuth()       { return request.auth != null; }
+    function userDoc()      { return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)); }
+    function role()         { return userDoc().data.role; }
+    function isAdmin()      { return isAuth() && userDoc().data.active == true && role() == 'admin'; }
+    function isSupervisor() { return isAuth() && userDoc().data.active == true && role() in ['admin','supervisor']; }
+    function isConteador()  { return isAuth() && userDoc().data.active == true && role() in ['admin','supervisor','conteador']; }
+    function isActive()     { return isAuth() && userDoc().data.active == true; }
+
+    match /catalogo/{id} {
+      allow read: if isActive();
+      allow write: if isAdmin();
+    }
+    match /catalogo_existencias/{id} {
+      allow read: if isActive();
+      allow write: if isAdmin();
+    }
+    match /tarimas/{id} {
+      allow read: if isActive();
+      allow create, update: if isSupervisor();
+      allow delete: if false;
+    }
+    match /conteos/{id} {
+      allow read: if isActive();
+      allow create: if isConteador();
+      allow update: if isSupervisor();
+      allow delete: if isAdmin();
+    }
+    match /auditoria/{id} {
+      allow read: if isSupervisor();
+      allow create: if isActive();
+      allow update, delete: if false;
+    }
+    match /usuarios/{id} {
+      allow read: if isActive();
+      allow write: if isAdmin();
+    }
+  }
+}
+=======================================================
+MIGRACIÓN localStorage → Firebase:
+
+1. Habilitar Firebase Auth (Email/Password)
+2. Reemplazar hashPass() + doLogin() con:
+   firebase.auth().signInWithEmailAndPassword(email, password)
+3. Reemplazar saveCounts()/loadAll() con listeners Firestore:
+   db.collection('conteos').onSnapshot(snap => {
+     counts = snap.docs.map(d=>({id:d.id,...d.data()}));
+     renderAll();
+   });
+4. Reemplazar cada push/filter con:
+   db.collection('conteos').add(entry)   → crear
+   db.collection('conteos').doc(id).update({cantidad:val})  → editar
+   db.collection('conteos').doc(id).delete()  → eliminar
+5. Los listeners onSnapshot() dan actualizaciones en tiempo real
+   entre todos los usuarios simultáneos.
+======================================================= -->
+</body>
+</html>
