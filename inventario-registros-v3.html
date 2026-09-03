@@ -1,0 +1,2167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="description" content="Sistema de toma física de inventario por registros identificados">
+<title>Toma Física de Inventario</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --page:#eef2f1;--surface:#fff;--surface-2:#f4f7f6;--surface-3:#e8eeec;
+  --text:#17211e;--muted:#5b6b66;--faint:#7d8b87;--line:#cdd8d4;
+  --brand:#087f5b;--brand-strong:#056044;--brand-soft:#d9f3e9;
+  --blue:#1769aa;--blue-soft:#e5f2fb;--amber:#8a5200;--amber-soft:#fff0cf;
+  --red:#a02020;--red-soft:#fde7e7;--purple:#6842a8;--purple-soft:#eee8fa;
+  --shadow:0 8px 28px rgba(23,33,30,.08);--radius:14px;--radius-sm:9px;
+  --font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",monospace
+}
+[data-theme="dark"]{
+  --page:#111815;--surface:#19221f;--surface-2:#222d29;--surface-3:#2b3833;
+  --text:#f0f5f3;--muted:#bdcac5;--faint:#93a29d;--line:#3b4b45;
+  --brand:#42c99c;--brand-strong:#76deb9;--brand-soft:#123e31;
+  --blue:#83c6f4;--blue-soft:#16364c;--amber:#ffd17a;--amber-soft:#4b3511;
+  --red:#ff9b9b;--red-soft:#4c2222;--purple:#c7acf7;--purple-soft:#352552;
+  --shadow:0 8px 28px rgba(0,0,0,.28)
+}
+@media(prefers-color-scheme:dark){
+  [data-theme="auto"]{
+    --page:#111815;--surface:#19221f;--surface-2:#222d29;--surface-3:#2b3833;
+    --text:#f0f5f3;--muted:#bdcac5;--faint:#93a29d;--line:#3b4b45;
+    --brand:#42c99c;--brand-strong:#76deb9;--brand-soft:#123e31;
+    --blue:#83c6f4;--blue-soft:#16364c;--amber:#ffd17a;--amber-soft:#4b3511;
+    --red:#ff9b9b;--red-soft:#4c2222;--purple:#c7acf7;--purple-soft:#352552;
+    --shadow:0 8px 28px rgba(0,0,0,.28)
+  }
+}
+html{font-size:16px}
+body{min-height:100vh;background:var(--page);color:var(--text);font-family:var(--font);line-height:1.45}
+button,input,select,textarea{font:inherit}
+button{touch-action:manipulation}
+.hidden{display:none!important}
+.app{width:min(1060px,100%);margin:auto;padding:16px}
+.surface{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;margin-bottom:12px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand-mark{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;background:var(--brand);color:#fff;font-size:20px}
+.brand-title{font-size:16px;font-weight:750;line-height:1.15}
+.brand-sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-actions{display:flex;align-items:center;gap:8px}
+.user-chip{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:999px;background:var(--surface-2);font-size:13px}
+.btn{min-height:44px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 14px;background:var(--surface);color:var(--text);font-weight:650;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.btn:hover{background:var(--surface-2)}
+.btn:focus-visible,.nav-btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid color-mix(in srgb,var(--brand) 35%,transparent);outline-offset:2px}
+.btn.primary{background:var(--brand);color:#fff;border-color:var(--brand-strong)}
+.btn.primary:hover{background:var(--brand-strong)}
+.btn.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 50%,var(--line))}
+.btn.danger:hover{background:var(--red-soft)}
+.btn.soft{background:var(--brand-soft);color:var(--brand-strong);border-color:transparent}
+.btn.sm{min-height:38px;padding:7px 11px;font-size:13px}
+.btn.icon{width:44px;padding:0}
+.btn.logout-text{width:auto;padding:0 14px}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.nav{display:flex;gap:6px;overflow:auto;padding:7px;margin-bottom:14px;scrollbar-width:thin}
+.nav-btn{min-height:42px;padding:8px 13px;border:0;border-radius:9px;background:transparent;color:var(--muted);font-weight:650;white-space:nowrap;cursor:pointer;display:flex;align-items:center;gap:7px}
+.nav-btn:hover{background:var(--surface-2)}
+.nav-btn.active{background:var(--brand-soft);color:var(--brand-strong)}
+.screen{display:none}
+.screen.active{display:block}
+.field{margin-bottom:15px}
+label{display:block;font-size:14px;font-weight:650;margin-bottom:6px;color:var(--muted)}
+input,select,textarea{width:100%;min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);color:var(--text)}
+input:focus,select:focus,textarea:focus{border-color:var(--brand)}
+input[readonly]{background:var(--surface-2)}
+textarea{min-height:80px;resize:vertical}
+.count-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:14px}
+.section-title{font-size:18px;font-weight:780;margin-bottom:4px}
+.section-copy{font-size:14px;color:var(--muted);margin-bottom:16px}
+.quantity{font-size:28px;font-weight:800;text-align:center;font-family:var(--mono)}
+.search-box{position:relative}
+.search-box>i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.search-box input{padding-left:38px}
+.dropdown{position:absolute;z-index:30;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);max-height:300px;overflow:auto}
+.option{width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--text);padding:11px 12px;text-align:left;cursor:pointer}
+.option:last-child{border-bottom:0}
+.option:hover,.option:focus{background:var(--surface-2)}
+.option-code{font-family:var(--mono);font-size:13px;font-weight:750;color:var(--blue)}
+.option-name{font-size:14px;margin-top:2px}
+.selected-product{min-height:66px;border:1px dashed var(--line);border-radius:10px;padding:11px 12px;background:var(--surface-2);display:flex;align-items:center}
+.selected-product.ready{border-style:solid;border-color:var(--blue);background:var(--blue-soft)}
+.record-result{padding:18px;border:2px solid var(--brand);background:var(--brand-soft);border-radius:var(--radius);text-align:center}
+.record-code{font-family:var(--mono);font-size:clamp(24px,5vw,36px);font-weight:900;letter-spacing:1px;color:var(--brand-strong);overflow-wrap:anywhere;margin:8px 0}
+.record-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.hint{font-size:13px;color:var(--muted)}
+.badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:750}
+.badge.green{background:var(--brand-soft);color:var(--brand-strong)}
+.badge.blue{background:var(--blue-soft);color:var(--blue)}
+.badge.amber{background:var(--amber-soft);color:var(--amber)}
+.badge.red{background:var(--red-soft);color:var(--red)}
+.badge.gray{background:var(--surface-2);color:var(--muted)}
+.badge.purple{background:var(--purple-soft);color:var(--purple)}
+.sync{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.sync-dot{width:9px;height:9px;border-radius:50%;background:var(--faint)}
+.sync.ok .sync-dot{background:var(--brand)}
+.sync.pending .sync-dot{background:var(--amber)}
+.sync.offline .sync-dot{background:var(--red)}
+.toolbar{display:flex;gap:9px;align-items:end;flex-wrap:wrap;margin-bottom:14px}
+.toolbar .field{margin:0;min-width:150px;flex:1}
+.toolbar .field.search-wide{flex:2;min-width:230px}
+.row-between{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.record-list{display:grid;gap:10px}
+.record-card{padding:15px 16px}
+.record-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.record-card-code{font-family:var(--mono);font-size:15px;font-weight:850;color:var(--brand-strong)}
+.record-product{font-size:16px;font-weight:750;margin-top:5px}
+.record-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+.datum{background:var(--surface-2);border-radius:9px;padding:9px 10px}
+.datum-label{font-size:12px;color:var(--muted)}
+.datum-value{font-size:14px;font-weight:750;overflow-wrap:anywhere}
+.card-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.empty{text-align:center;padding:42px 18px;color:var(--muted)}
+.empty i{display:block;font-size:34px;margin-bottom:8px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.stat{padding:15px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
+.stat-value{font-size:25px;font-weight:850}
+.stat-label{font-size:13px;color:var(--muted);margin-top:2px}
+.progress{height:10px;background:var(--surface-3);border-radius:999px;overflow:hidden;margin-top:8px}
+.progress>span{height:100%;display:block;background:var(--brand);border-radius:inherit}
+.diff-row{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(85px,.55fr));gap:10px;align-items:center;padding:13px 15px;border-bottom:1px solid var(--line)}
+.diff-row:last-child{border-bottom:0}
+.diff-head{font-size:12px;color:var(--muted);font-weight:750;background:var(--surface-2)}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.positive{color:var(--amber);font-weight:800}
+.negative{color:var(--red);font-weight:800}
+.match{color:var(--brand-strong);font-weight:800}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.list-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.list-row:last-child{border-bottom:0}
+.bar{height:8px;background:var(--surface-3);border-radius:99px;overflow:hidden;flex:1}
+.bar span{display:block;height:100%;background:var(--brand)}
+.session-card{padding:15px 16px}
+.session-card.current{border:2px solid var(--brand)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.login{min-height:100vh;display:grid;place-items:center;padding:18px}
+.login-card{width:min(380px,100%);padding:28px}
+.login-logo{width:56px;height:56px;background:var(--brand);color:#fff;border-radius:16px;display:grid;place-items:center;font-size:28px;margin:0 auto 13px}
+.login-title{text-align:center;font-size:22px;font-weight:850}
+.login-copy{text-align:center;color:var(--muted);font-size:14px;margin:3px 0 22px}
+.theme-row{display:flex;justify-content:center;gap:6px;margin-top:18px}
+.theme-btn{min-height:38px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--muted);padding:6px 10px;cursor:pointer}
+.theme-btn.active{background:var(--brand-soft);color:var(--brand-strong);border-color:var(--brand)}
+.alert{border-radius:10px;padding:11px 13px;margin-bottom:13px;font-size:14px}
+.alert.error{background:var(--red-soft);color:var(--red);border:1px solid color-mix(in srgb,var(--red) 45%,transparent)}
+.alert.warning{background:var(--amber-soft);color:var(--amber);border:1px solid color-mix(in srgb,var(--amber) 45%,transparent)}
+.alert.info{background:var(--blue-soft);color:var(--blue);border:1px solid color-mix(in srgb,var(--blue) 40%,transparent)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;display:grid;place-items:center;padding:16px}
+.modal{width:min(540px,100%);max-height:90vh;overflow:auto;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 24px 70px rgba(0,0,0,.3)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px;border-bottom:1px solid var(--line)}
+.modal-title{font-size:18px;font-weight:800}
+.modal-body{padding:18px}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid var(--line)}
+.toast{position:fixed;top:16px;right:16px;z-index:200;width:min(360px,calc(100% - 32px));padding:13px 15px;border-radius:11px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.toast.success{border-left:5px solid var(--brand)}
+.toast.error{border-left:5px solid var(--red)}
+.toast.warning{border-left:5px solid var(--amber)}
+.toast-title{font-weight:800}
+.toast-message{font-size:13px;color:var(--muted);margin-top:2px}
+.upload{border:2px dashed var(--line);border-radius:12px;padding:20px;text-align:center}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-size:14px}
+th{color:var(--muted);background:var(--surface-2);font-size:13px}
+code{font-family:var(--mono);background:var(--surface-2);border-radius:5px;padding:2px 5px}
+#printArea{display:none}
+@media(max-width:760px){
+  .app{padding:8px 8px 86px}
+  .topbar{border-radius:0;margin:-8px -8px 8px;padding:10px 12px;position:sticky;top:0;z-index:40}
+  .brand-sub,.user-chip span:not(.user-first){display:none}
+  .count-layout,.two-col{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}
+  .record-grid{grid-template-columns:1fr 1fr}
+  .nav{position:fixed;bottom:0;left:0;right:0;z-index:45;margin:0;border-radius:0;border-width:1px 0 0;padding:5px 6px calc(5px + env(safe-area-inset-bottom));background:var(--surface);justify-content:flex-start}
+  .nav-btn{min-width:76px;flex-direction:column;gap:1px;font-size:11px;padding:5px 8px}
+  .nav-btn i{font-size:19px}
+  .diff-row{grid-template-columns:minmax(125px,1.3fr) repeat(3,minmax(70px,.5fr));font-size:13px}
+  .diff-row>*{min-width:0}
+}
+@media(max-width:430px){
+  .stats{grid-template-columns:1fr 1fr}
+  .record-grid{grid-template-columns:1fr 1fr}
+  .record-head{flex-direction:column}
+  .top-actions .btn.logout-text span{display:none}
+  .top-actions .btn.logout-text{width:44px;padding:0}
+  .diff-row{grid-template-columns:minmax(105px,1.1fr) repeat(3,minmax(58px,.5fr));gap:5px;padding:11px 9px}
+}
+@media print{
+  body.printing>*:not(#printArea){display:none!important}
+  body.printing #printArea{display:block!important;color:#000;background:#fff}
+  @page{size:80mm 50mm;margin:4mm}
+  .print-label{height:42mm;border:2px solid #000;padding:3mm;display:flex;flex-direction:column;justify-content:space-between;font-family:Arial,sans-serif}
+  .print-status{font-size:10pt;font-weight:800}
+  .print-code{font:900 18pt var(--mono);text-align:center;letter-spacing:.5pt}
+  .print-product{font-size:10pt;font-weight:700}
+  .print-meta{display:flex;justify-content:space-between;font-size:9pt}
+  .report-print{font-family:Arial,sans-serif}
+  .report-print h1{font-size:18pt;margin-bottom:4mm}
+  .report-print table{font-size:8pt}
+}
+</style>
+</head>
+<body data-theme="auto">
+
+<section id="loginScreen" class="login">
+  <form id="loginForm" class="login-card surface" novalidate>
+    <div class="login-logo" aria-hidden="true"><i class="ti ti-clipboard-check"></i></div>
+    <h1 class="login-title">Toma Física</h1>
+    <p class="login-copy">Inventario por registros identificados</p>
+    <div id="loginAlert" class="alert error hidden" role="alert"></div>
+    <div class="field">
+      <label for="loginUser">Usuario</label>
+      <input id="loginUser" name="username" autocomplete="username" placeholder="ej: bodega1">
+    </div>
+    <div class="field">
+      <label for="loginPass">Contraseña</label>
+      <input id="loginPass" name="password" type="password" autocomplete="current-password" placeholder="••••••">
+    </div>
+    <button id="loginButton" class="btn primary" style="width:100%" type="submit">
+      <i class="ti ti-login" aria-hidden="true"></i> Ingresar
+    </button>
+    <div class="theme-row" aria-label="Tema visual">
+      <button class="theme-btn" type="button" data-theme-choice="auto">Auto</button>
+      <button class="theme-btn" type="button" data-theme-choice="light">Claro</button>
+      <button class="theme-btn" type="button" data-theme-choice="dark">Oscuro</button>
+    </div>
+  </form>
+</section>
+
+<div id="appShell" class="app hidden">
+  <header class="topbar surface">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"><i class="ti ti-clipboard-check"></i></div>
+      <div style="min-width:0">
+        <div class="brand-title">Toma Física</div>
+        <div id="brandInventory" class="brand-sub">Registros identificados por código</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <div id="syncStatus" class="sync offline" aria-live="polite">
+        <span class="sync-dot"></span><span id="syncText">Conectando</span>
+      </div>
+      <div class="user-chip">
+        <i class="ti ti-user" aria-hidden="true"></i>
+        <span id="userName" class="user-first"></span>
+        <span id="userRole" class="badge gray"></span>
+      </div>
+      <button id="themeCycle" class="btn icon" type="button" title="Cambiar tema" aria-label="Cambiar tema">
+        <i class="ti ti-sun-moon" aria-hidden="true"></i>
+      </button>
+      <button id="logoutButton" class="btn icon logout-text" type="button" title="Salir" aria-label="Cerrar sesión">
+        <i class="ti ti-logout" aria-hidden="true"></i><span>Salir</span>
+      </button>
+    </div>
+  </header>
+
+  <nav id="mainNav" class="nav surface" aria-label="Módulos" role="tablist">
+    <button class="nav-btn active" type="button" data-tab="count" role="tab" aria-selected="true"><i class="ti ti-scan"></i>Conteo</button>
+    <button class="nav-btn" type="button" data-tab="records" role="tab" aria-selected="false"><i class="ti ti-tags"></i>Registros</button>
+    <button class="nav-btn" type="button" data-tab="pending" role="tab" aria-selected="false"><i class="ti ti-clock"></i>Pendientes</button>
+    <button class="nav-btn" type="button" data-tab="differences" role="tab" aria-selected="false"><i class="ti ti-arrows-diff"></i>Diferencias</button>
+    <button class="nav-btn" type="button" data-tab="dashboard" role="tab" aria-selected="false"><i class="ti ti-chart-bar"></i>Resumen</button>
+    <button class="nav-btn permission-audit" type="button" data-tab="audit" role="tab" aria-selected="false"><i class="ti ti-history"></i>Auditoría</button>
+    <button class="nav-btn permission-catalog" type="button" data-tab="catalog" role="tab" aria-selected="false"><i class="ti ti-upload"></i>Catálogo</button>
+    <button class="nav-btn permission-users" type="button" data-tab="users" role="tab" aria-selected="false"><i class="ti ti-users"></i>Usuarios</button>
+  </nav>
+
+  <main>
+    <section id="tab-count" class="screen active" role="tabpanel">
+      <div class="count-layout">
+        <form id="countForm" class="card" novalidate>
+          <h2 class="section-title">Registrar unidades contadas</h2>
+          <p class="section-copy">Cada captura recibe un consecutivo como <strong>C-0001</strong> para identificar físicamente esas unidades.</p>
+          <div id="countUnavailable" class="alert warning hidden"></div>
+          <div class="field" style="position:relative">
+            <label for="productSearch">Código o producto</label>
+            <div class="search-box">
+              <i class="ti ti-barcode" aria-hidden="true"></i>
+              <input id="productSearch" autocomplete="off" placeholder="Escanea o escribe el SKU">
+            </div>
+            <div id="productDropdown" class="dropdown hidden" role="listbox"></div>
+          </div>
+          <div class="field">
+            <label>Producto seleccionado</label>
+            <div id="selectedProduct" class="selected-product" aria-live="polite">
+              <span class="muted">Selecciona un producto para continuar.</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="countQuantity">Cantidad contada</label>
+            <input id="countQuantity" class="quantity" type="number" inputmode="numeric" min="0" step="1" placeholder="0">
+          </div>
+          <div class="field">
+            <label for="countLocation">Ubicación física <span class="muted">(opcional)</span></label>
+            <input id="countLocation" maxlength="80" placeholder="Ej: Pasillo A, estante 3">
+          </div>
+          <details>
+            <summary class="hint" style="cursor:pointer;margin-bottom:10px">Agregar una nota</summary>
+            <div class="field">
+              <label for="countNote">Nota</label>
+              <textarea id="countNote" maxlength="300" placeholder="Lote, estado u observación"></textarea>
+            </div>
+          </details>
+          <button id="saveCountButton" class="btn primary" style="width:100%" type="submit">
+            <i class="ti ti-check"></i> Guardar y generar código
+          </button>
+        </form>
+
+        <aside>
+          <div id="lastRecordEmpty" class="card empty">
+            <i class="ti ti-tag"></i>
+            <strong>El código aparecerá aquí</strong>
+            <p class="small">Podrás copiarlo o imprimir una etiqueta.</p>
+          </div>
+          <div id="lastRecord" class="record-result hidden" aria-live="polite">
+            <span class="badge green">REGISTRO GUARDADO</span>
+            <div class="hint" style="margin-top:8px">Código para identificar las unidades</div>
+            <div id="lastRecordCode" class="record-code"></div>
+            <div id="lastRecordSummary" style="font-weight:750"></div>
+            <div id="lastRecordSync" class="hint"></div>
+            <div class="record-actions">
+              <button id="copyLastCode" class="btn sm" type="button"><i class="ti ti-copy"></i> Copiar</button>
+              <button id="printLastRecord" class="btn sm primary" type="button"><i class="ti ti-printer"></i> Imprimir etiqueta</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3 style="font-size:15px;margin-bottom:8px">Cómo usar el código</h3>
+            <ol class="hint" style="padding-left:20px;display:grid;gap:7px">
+              <li>Cuenta las unidades y guarda el registro.</li>
+              <li>Escribe o imprime el código generado.</li>
+              <li>Coloca el código junto a esas unidades.</li>
+              <li>Busca el código en Registros para comprobar quién y cuándo las contó.</li>
+            </ol>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="tab-records" class="screen" role="tabpanel">
+      <div class="row-between" style="margin-bottom:12px;flex-wrap:wrap">
+        <div><h2 class="section-title">Registros de conteo</h2><p class="hint">Cada tarjeta corresponde a un grupo de unidades identificadas.</p></div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span id="recordTotal" class="badge gray">0 registros</span>
+          <button id="clearPreviousRecordsButton" class="btn sm danger permission-reset" type="button"><i class="ti ti-archive"></i> Retirar registros anteriores</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="field search-wide"><label for="recordSearch">Buscar</label><input id="recordSearch" placeholder="Código de registro, SKU o producto"></div>
+        <div class="field"><label for="recordUserFilter">Usuario</label><select id="recordUserFilter"><option value="">Todos</option></select></div>
+        <div class="field"><label for="recordStatusFilter">Estado</label><select id="recordStatusFilter"><option value="activo">Activos</option><option value="">Todos</option><option value="anulado">Anulados</option><option value="archivado">Archivados</option></select></div>
+      </div>
+      <div id="recordList" class="record-list"></div>
+    </section>
+
+    <section id="tab-pending" class="screen" role="tabpanel">
+      <h2 class="section-title">Productos pendientes</h2>
+      <p class="section-copy">Avance de la toma física actual.</p>
+      <div id="pendingStats" class="stats"></div>
+      <div class="card">
+        <div class="field"><label for="pendingSearch">Buscar pendiente</label><input id="pendingSearch" placeholder="SKU o nombre del producto"></div>
+        <div id="pendingList"></div>
+      </div>
+    </section>
+
+    <section id="tab-differences" class="screen" role="tabpanel">
+      <div class="row-between" style="margin-bottom:12px;align-items:flex-end;flex-wrap:wrap">
+        <div><h2 class="section-title">Diferencias</h2><p class="hint">Existencia del catálogo contra el total contado.</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button id="exportCsv" class="btn sm" type="button"><i class="ti ti-file-type-csv"></i> CSV para Excel</button>
+          <button id="printReport" class="btn sm" type="button"><i class="ti ti-printer"></i> Imprimir / PDF</button>
+        </div>
+      </div>
+      <div id="differenceAvailability" class="alert warning hidden"></div>
+      <div id="differenceStats" class="stats"></div>
+      <div class="toolbar">
+        <div class="field search-wide"><label for="differenceSearch">Buscar</label><input id="differenceSearch" placeholder="SKU o producto"></div>
+        <div class="field"><label for="differenceFilter">Resultado</label><select id="differenceFilter"><option value="">Todos</option><option value="diff">Con diferencia</option><option value="ok">Sin diferencia</option><option value="faltante">Faltantes</option><option value="sobrante">Sobrantes</option><option value="pendiente">Pendientes</option><option value="sin-existencia">Sin existencia cargada</option></select></div>
+      </div>
+      <div id="differenceList" class="surface"></div>
+    </section>
+
+    <section id="tab-dashboard" class="screen" role="tabpanel">
+      <h2 class="section-title">Resumen de la toma</h2>
+      <p class="section-copy">Indicadores calculados solo con registros activos.</p>
+      <div id="dashboardStats" class="stats"></div>
+      <div class="two-col">
+        <div class="card"><h3 style="font-size:16px;margin-bottom:10px">Registros por usuario</h3><div id="dashboardUsers"></div></div>
+        <div class="card"><h3 style="font-size:16px;margin-bottom:10px">Últimos registros</h3><div id="dashboardRecent"></div></div>
+      </div>
+      <div class="card"><h3 style="font-size:16px;margin-bottom:10px">Mayores diferencias</h3><div id="dashboardDifferences"></div></div>
+    </section>
+
+    <section id="tab-audit" class="screen" role="tabpanel">
+      <div class="row-between" style="margin-bottom:12px"><h2 class="section-title">Auditoría</h2><span id="auditTotal" class="badge gray">0 eventos</span></div>
+      <div class="toolbar">
+        <div class="field search-wide"><label for="auditSearch">Buscar</label><input id="auditSearch" placeholder="Acción, usuario o detalle"></div>
+      </div>
+      <div id="auditList" class="record-list"></div>
+    </section>
+
+    <section id="tab-catalog" class="screen" role="tabpanel">
+      <h2 class="section-title">Catálogo y existencias</h2>
+      <p class="section-copy">Publica primero los códigos para comenzar el conteo. Cuando recibas la existencia del sistema, cárgala por separado para calcular diferencias.</p>
+      <div class="card">
+        <div class="row-between" style="margin-bottom:12px;flex-wrap:wrap">
+          <div><h3 style="font-size:16px">1. Catálogo maestro</h3><p id="masterCatalogMeta" class="hint">Sin cargar</p></div>
+          <span id="masterCatalogCountBadge" class="badge gray">0 productos</span>
+        </div>
+        <div class="upload">
+          <i class="ti ti-file-spreadsheet" style="font-size:32px;color:var(--brand)"></i>
+          <p style="font-weight:750;margin:7px 0">Archivo de códigos y productos</p>
+          <p class="hint" style="margin-bottom:12px">Columnas requeridas: <code>codigo</code>, <code>producto</code></p>
+          <input id="masterCatalogFile" type="file" accept=".csv,text/csv" style="max-width:420px">
+        </div>
+        <div id="masterCatalogImportResult" style="margin-top:14px"></div>
+        <div id="masterCatalogPreview" class="table-wrap" style="margin-top:14px"></div>
+      </div>
+      <div class="card">
+        <div class="row-between" style="margin-bottom:12px;flex-wrap:wrap">
+          <div><h3 style="font-size:16px">2. Existencias del sistema</h3><p id="stockMeta" class="hint">Pendiente de cargar</p></div>
+          <span id="stockCountBadge" class="badge gray">0 existencias</span>
+        </div>
+        <div class="alert info">Esta carga puede hacerse más tarde. Mientras no exista, el conteo seguirá funcionando y las diferencias se mostrarán como pendientes.</div>
+        <div class="upload">
+          <i class="ti ti-database-import" style="font-size:32px;color:var(--blue)"></i>
+          <p style="font-weight:750;margin:7px 0">Archivo de existencias</p>
+          <p class="hint" style="margin-bottom:12px">Columnas requeridas: <code>codigo</code>, <code>existencia</code>. La columna <code>producto</code> es opcional.</p>
+          <input id="stockFile" type="file" accept=".csv,text/csv" style="max-width:420px">
+        </div>
+        <div id="stockImportResult" style="margin-top:14px"></div>
+        <div id="stockPreview" class="table-wrap" style="margin-top:14px"></div>
+      </div>
+    </section>
+
+    <section id="tab-users" class="screen" role="tabpanel">
+      <div class="row-between" style="margin-bottom:12px;flex-wrap:wrap">
+        <div><h2 class="section-title">Perfiles de usuario</h2><p class="hint">Las contraseñas y cuentas se administran de forma segura en Firebase Authentication.</p></div>
+        <button id="addProfileButton" class="btn primary" type="button"><i class="ti ti-user-plus"></i> Agregar perfil</button>
+      </div>
+      <div class="alert info">Para agregar una persona, crea primero su cuenta en Firebase Authentication y copia aquí su UID. Esta app no incluye contraseñas predeterminadas ni cambia contraseñas de otras personas.</div>
+      <div id="userList" class="record-list"></div>
+    </section>
+  </main>
+</div>
+
+<div id="modalOverlay" class="modal-overlay hidden" role="presentation">
+  <section id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <header class="modal-head"><h2 id="modalTitle" class="modal-title"></h2><button id="modalClose" class="btn icon" type="button" aria-label="Cerrar"><i class="ti ti-x"></i></button></header>
+    <div id="modalBody" class="modal-body"></div>
+    <footer id="modalFoot" class="modal-foot"></footer>
+  </section>
+</div>
+
+<div id="toast" class="toast hidden" role="status" aria-live="polite">
+  <div id="toastTitle" class="toast-title"></div>
+  <div id="toastMessage" class="toast-message"></div>
+</div>
+
+<div id="printArea"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+"use strict";
+
+var FIREBASE_CONFIG={
+  apiKey:"AIzaSyDC6VKCKXJD6e7jtQNQxvoBVjtoVBcCmeU",
+  authDomain:"inventario-bodega-2ce87.firebaseapp.com",
+  databaseURL:"https://inventario-bodega-2ce87-default-rtdb.firebaseio.com",
+  projectId:"inventario-bodega-2ce87",
+  storageBucket:"inventario-bodega-2ce87.firebasestorage.app",
+  messagingSenderId:"29303001299",
+  appId:"1:29303001299:web:d3ebde582a06a3a8c18426",
+  measurementId:"G-GTN33FC42Z"
+};
+
+var ROLES={
+  admin:{label:"Administrador",count:true,review:true,audit:true,catalog:true,users:true,reset:true},
+  supervisor:{label:"Supervisor",count:true,review:true,audit:true,catalog:false,users:false,reset:false},
+  conteador:{label:"Conteador",count:true,review:false,audit:false,catalog:false,users:false,reset:false},
+  consulta:{label:"Consulta",count:false,review:false,audit:false,catalog:false,users:false,reset:false}
+};
+
+var state={
+  user:null,
+  firebaseUser:null,
+  catalog:[],
+  catalogVersion:null,
+  existences:[],
+  existenceVersion:null,
+  records:[],
+  audits:[],
+  users:[],
+  selectedProduct:null,
+  lastRecord:null,
+  rootListeners:[],
+  scopedListeners:[],
+  online:navigator.onLine,
+  catalogFromLegacy:false,
+  existenceFromLegacy:false,
+  masterImportDraft:null,
+  stockImportDraft:null
+};
+
+var db=null;
+var auth=null;
+var modalRestoreFocus=null;
+var toastTimer=null;
+
+function byId(id){return document.getElementById(id)}
+function all(selector){return Array.prototype.slice.call(document.querySelectorAll(selector))}
+function clearNode(node){while(node&&node.firstChild)node.removeChild(node.firstChild)}
+function textNode(tag,className,text){
+  var node=document.createElement(tag);
+  if(className)node.className=className;
+  if(text!==undefined&&text!==null)node.textContent=String(text);
+  return node
+}
+function icon(name){
+  var node=document.createElement("i");
+  node.className="ti ti-"+name;
+  node.setAttribute("aria-hidden","true");
+  return node
+}
+function appendChildren(parent,children){
+  children.forEach(function(child){
+    if(child===null||child===undefined)return;
+    parent.appendChild(typeof child==="string"?document.createTextNode(child):child)
+  });
+  return parent
+}
+function makeButton(label,className,action,id){
+  var button=textNode("button",className||"btn",label);
+  button.type="button";
+  if(action)button.dataset.action=action;
+  if(id)button.dataset.id=id;
+  return button
+}
+function role(){
+  return state.user&&ROLES[state.user.role]?ROLES[state.user.role]:ROLES.consulta
+}
+function isReviewer(){return role().review}
+function nowIso(){return new Date().toISOString()}
+function fmtDate(value,withTime){
+  if(!value)return "—";
+  var date=new Date(value);
+  if(Number.isNaN(date.getTime()))return "—";
+  return withTime?date.toLocaleString("es-SV"):date.toLocaleDateString("es-SV")
+}
+function shortText(value,max){
+  var string=String(value||"");
+  return string.length>max?string.slice(0,max-1)+"…":string
+}
+function normalizeSku(value){return String(value||"").trim().toUpperCase()}
+function docIdForSku(value){
+  return encodeURIComponent(normalizeSku(value)).replace(/\./g,"%2E")
+}
+function randomToken(length){
+  var alphabet="23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  var bytes=new Uint8Array(length);
+  if(window.crypto&&window.crypto.getRandomValues)window.crypto.getRandomValues(bytes);
+  else for(var i=0;i<length;i++)bytes[i]=Math.floor(Math.random()*256);
+  var out="";
+  for(var j=0;j<length;j++)out+=alphabet[bytes[j]%alphabet.length];
+  return out
+}
+function recordCode(sequence){
+  return "C-"+String(sequence).padStart(4,"0")
+}
+function auditId(){return "AUD-"+Date.now()+"-"+randomToken(6)}
+function serverTimestamp(){
+  return firebase.firestore.FieldValue.serverTimestamp()
+}
+function sleep(ms){return new Promise(function(resolve){setTimeout(resolve,ms)})}
+
+function setTheme(theme){
+  document.body.dataset.theme=theme;
+  localStorage.setItem("inv3_theme",theme);
+  all("[data-theme-choice]").forEach(function(button){
+    button.classList.toggle("active",button.dataset.themeChoice===theme)
+  })
+}
+function applyTheme(){setTheme(localStorage.getItem("inv3_theme")||"auto")}
+
+function toast(title,message,type){
+  clearTimeout(toastTimer);
+  var node=byId("toast");
+  node.className="toast "+(type||"success");
+  byId("toastTitle").textContent=title||"";
+  byId("toastMessage").textContent=message||"";
+  node.classList.remove("hidden");
+  toastTimer=setTimeout(function(){node.classList.add("hidden")},4200)
+}
+
+function openModal(title,buildBody,buttons){
+  modalRestoreFocus=document.activeElement;
+  byId("modalTitle").textContent=title;
+  clearNode(byId("modalBody"));
+  clearNode(byId("modalFoot"));
+  buildBody(byId("modalBody"));
+  (buttons||[]).forEach(function(config){
+    var button=makeButton(config.label,config.className||"btn");
+    button.addEventListener("click",config.onClick);
+    byId("modalFoot").appendChild(button)
+  });
+  byId("modalOverlay").classList.remove("hidden");
+  setTimeout(function(){
+    var first=byId("modal").querySelector("input,select,textarea,button");
+    if(first)first.focus()
+  },0)
+}
+function closeModal(){
+  byId("modalOverlay").classList.add("hidden");
+  clearNode(byId("modalBody"));
+  clearNode(byId("modalFoot"));
+  if(modalRestoreFocus&&modalRestoreFocus.focus)modalRestoreFocus.focus()
+}
+function modalField(parent,labelText,id,type,placeholder,value){
+  var wrap=textNode("div","field");
+  var label=textNode("label","",labelText);
+  label.htmlFor=id;
+  var input=document.createElement(type==="textarea"?"textarea":"input");
+  input.id=id;
+  if(type&&type!=="textarea")input.type=type;
+  if(placeholder)input.placeholder=placeholder;
+  if(value!==undefined&&value!==null)input.value=value;
+  wrap.appendChild(label);
+  wrap.appendChild(input);
+  parent.appendChild(wrap);
+  return input
+}
+function modalSelect(parent,labelText,id,options,value){
+  var wrap=textNode("div","field");
+  var label=textNode("label","",labelText);
+  label.htmlFor=id;
+  var select=document.createElement("select");
+  select.id=id;
+  options.forEach(function(item){
+    var option=document.createElement("option");
+    option.value=item.value;
+    option.textContent=item.label;
+    option.selected=item.value===value;
+    select.appendChild(option)
+  });
+  wrap.appendChild(label);
+  wrap.appendChild(select);
+  parent.appendChild(wrap);
+  return select
+}
+
+function clearListeners(list){
+  list.forEach(function(unsubscribe){try{unsubscribe()}catch(error){}});
+  list.length=0
+}
+function syncStatus(){
+  var pending=state.records.filter(function(item){return item._pending}).length;
+  var node=byId("syncStatus");
+  var text=byId("syncText");
+  node.classList.remove("ok","pending","offline");
+  if(!state.online){
+    node.classList.add("offline");
+    text.textContent=pending?pending+" pendiente"+(pending===1?"":"s"):"Sin conexión"
+  }else if(pending){
+    node.classList.add("pending");
+    text.textContent=pending+" pendiente"+(pending===1?"":"s")
+  }else{
+    node.classList.add("ok");
+    text.textContent="Al día"
+  }
+}
+
+function showLogin(message){
+  byId("loginScreen").classList.remove("hidden");
+  byId("appShell").classList.add("hidden");
+  if(message){
+    byId("loginAlert").textContent=message;
+    byId("loginAlert").classList.remove("hidden")
+  }else byId("loginAlert").classList.add("hidden");
+  byId("loginPass").value=""
+}
+function showApp(){
+  byId("loginScreen").classList.add("hidden");
+  byId("appShell").classList.remove("hidden");
+  byId("userName").textContent=state.user.name||state.user.username||"Usuario";
+  byId("userRole").textContent=role().label;
+  applyPermissions()
+}
+function applyPermissions(){
+  var permissions={
+    ".permission-audit":role().audit,
+    ".permission-catalog":role().catalog,
+    ".permission-users":role().users,
+    ".permission-reset":role().reset
+  };
+  Object.keys(permissions).forEach(function(selector){
+    all(selector).forEach(function(node){node.classList.toggle("hidden",!permissions[selector])})
+  })
+}
+function buildEmail(username){
+  return String(username||"").trim().toLowerCase().replace(/\s+/g,"")+"@toma-fisica.app"
+}
+
+async function loadProfile(firebaseUser){
+  var snapshot=await db.collection("usuarios").doc(firebaseUser.uid).get();
+  if(!snapshot.exists)throw new Error("Tu cuenta no tiene un perfil autorizado.");
+  var profile=Object.assign({},snapshot.data(),{id:snapshot.id});
+  if(!profile.active)throw new Error("Tu cuenta está desactivada.");
+  state.firebaseUser=firebaseUser;
+  state.user=profile;
+  showApp();
+  await loadCatalogData();
+  subscribeCatalogChanges();
+  subscribeOwnProfile();
+  subscribeRecordsAndAudit();
+  if(role().users)subscribeUsers();
+}
+
+function subscribeCatalogChanges(){
+  ["catalogo","existencias"].forEach(function(name){
+    var unsubscribe=db.collection("config").doc(name).onSnapshot(function(snapshot){
+      var version=snapshot.exists?snapshot.data().activeVersion:null;
+      var current=name==="catalogo"?state.catalogVersion:state.existenceVersion;
+      if(version!==current)loadCatalogData().then(renderAll)
+    },function(error){console.warn("[Datos en tiempo real: "+name+"]",error.message)});
+    state.rootListeners.push(unsubscribe)
+  })
+}
+
+function subscribeOwnProfile(){
+  var unsubscribe=db.collection("usuarios").doc(state.user.id).onSnapshot(function(snapshot){
+    if(!snapshot.exists||snapshot.data().active===false){
+      toast("Acceso desactivado","La sesión se cerrará.","error");
+      auth.signOut();
+      return
+    }
+    var previousRole=state.user.role;
+    state.user=Object.assign({},snapshot.data(),{id:snapshot.id});
+    byId("userName").textContent=state.user.name||state.user.username||"Usuario";
+    byId("userRole").textContent=role().label;
+    applyPermissions();
+    if(previousRole!==state.user.role)window.location.reload()
+  });
+  state.rootListeners.push(unsubscribe)
+}
+
+async function loadCatalogData(){
+  state.catalog=[];
+  state.catalogVersion=null;
+  state.existences=[];
+  state.existenceVersion=null;
+  state.catalogFromLegacy=false;
+  state.existenceFromLegacy=false;
+  try{
+    var catalogConfig=await db.collection("config").doc("catalogo").get();
+    var stockConfig=null;
+    try{stockConfig=await db.collection("config").doc("existencias").get()}
+    catch(stockConfigError){console.warn("[Configuración de existencias]",stockConfigError.message)}
+    var currentCatalogRows=[];
+
+    if(catalogConfig.exists&&catalogConfig.data().activeVersion){
+      state.catalogVersion=catalogConfig.data().activeVersion;
+      var items=await db.collection("catalogo_items").where("version","==",state.catalogVersion).get();
+      currentCatalogRows=items.docs.map(function(doc){return Object.assign({},doc.data(),{id:doc.id})});
+      state.catalog=currentCatalogRows.map(function(item){
+        return {codigo:normalizeSku(item.codigo),producto:String(item.producto||"").trim()}
+      }).filter(function(item){return item.codigo&&item.producto})
+    }
+    if(!state.catalog.length){
+      var legacyMaster=await db.collection("catalogo").doc("snapshot").get();
+      var master=legacyMaster.exists&&Array.isArray(legacyMaster.data().items)?legacyMaster.data().items:[];
+      state.catalog=master.map(function(item){
+        return {codigo:normalizeSku(item.codigo),producto:String(item.producto||"").trim()}
+      }).filter(function(item){return item.codigo&&item.producto});
+      state.catalogFromLegacy=state.catalog.length>0
+    }
+
+    if(stockConfig&&stockConfig.exists&&stockConfig.data().activeVersion){
+      state.existenceVersion=stockConfig.data().activeVersion;
+      var stockItems=await db.collection("existencia_items").where("version","==",state.existenceVersion).get();
+      state.existences=stockItems.docs.map(function(doc){
+        var item=doc.data();
+        return {codigo:normalizeSku(item.codigo),producto:String(item.producto||"").trim(),existencia:Number(item.existencia)}
+      }).filter(function(item){return item.codigo&&Number.isFinite(item.existencia)&&item.existencia>=0})
+    }
+
+    // Compatibilidad con la versión que guardaba catálogo y existencia juntos.
+    if(!state.existences.length&&currentCatalogRows.length){
+      state.existences=currentCatalogRows.filter(function(item){
+        return item.existencia!==undefined&&Number.isFinite(Number(item.existencia))&&Number(item.existencia)>=0
+      }).map(function(item){
+        return {codigo:normalizeSku(item.codigo),producto:String(item.producto||"").trim(),existencia:Number(item.existencia)}
+      });
+      state.existenceFromLegacy=state.existences.length>0
+    }
+    if(!state.existences.length){
+      var legacyStock=await db.collection("catalogo_existencias").doc("snapshot").get();
+      var stock=legacyStock.exists&&Array.isArray(legacyStock.data().items)?legacyStock.data().items:[];
+      state.existences=stock.map(function(item){
+        return {codigo:normalizeSku(item.codigo),producto:String(item.producto||"").trim(),existencia:Number(item.existencia)}
+      }).filter(function(item){return item.codigo&&Number.isFinite(item.existencia)&&item.existencia>=0});
+      state.existenceFromLegacy=state.existences.length>0
+    }
+
+    state.catalog.sort(function(a,b){return a.codigo.localeCompare(b.codigo)});
+    state.existences.sort(function(a,b){return a.codigo.localeCompare(b.codigo)});
+    renderCatalog()
+  }catch(error){
+    console.error("[Catálogo y existencias]",error);
+    toast("No se pudieron cargar los datos",error.message,"error")
+  }
+}
+
+function subscribeUsers(){
+  var unsubscribe=db.collection("usuarios").orderBy("name").onSnapshot(function(snapshot){
+    state.users=snapshot.docs.map(function(doc){return Object.assign({},doc.data(),{id:doc.id})});
+    renderUsers()
+  },function(error){console.error("[Usuarios]",error)});
+  state.rootListeners.push(unsubscribe)
+}
+
+function subscribeRecordsAndAudit(){
+  var recordUnsubscribe=db.collection("conteos").onSnapshot({includeMetadataChanges:true},function(snapshot){
+    state.records=snapshot.docs.map(function(doc){
+      var data=doc.data();
+      return Object.assign({},data,{
+        id:doc.id,
+        registroCodigo:data.registroCodigo||data.ubicacion||doc.id,
+        estado:data.estado||"activo",
+        createdAt:data.createdAt||data.ts||"",
+        _pending:doc.metadata.hasPendingWrites
+      })
+    }).sort(function(a,b){return String(b.createdAt||"").localeCompare(String(a.createdAt||""))});
+    if(state.lastRecord){
+      var refreshed=state.records.find(function(item){return item.id===state.lastRecord.id});
+      if(refreshed){state.lastRecord=refreshed;renderLastRecord()}
+    }
+    syncStatus();
+    renderAll()
+  },function(error){
+    console.error("[Registros]",error);
+    toast("No se pudieron sincronizar los registros",error.message,"error")
+  });
+  state.rootListeners.push(recordUnsubscribe);
+
+  if(role().audit){
+    var auditBuckets={current:[],legacy:[]};
+    var mergeAudits=function(){
+      var map=new Map();
+      auditBuckets.current.concat(auditBuckets.legacy).forEach(function(item){map.set(item.id,item)});
+      state.audits=Array.from(map.values()).sort(function(a,b){return String(b.createdAt||b.ts||"").localeCompare(String(a.createdAt||a.ts||""))}).slice(0,500);
+      renderAudit()
+    };
+    var currentAudit=db.collection("auditoria").orderBy("createdAt","desc").limit(500).onSnapshot(function(snapshot){
+      auditBuckets.current=snapshot.docs.map(function(doc){return Object.assign({},doc.data(),{id:doc.id})});
+      mergeAudits()
+    },function(error){console.error("[Auditoria actual]",error)});
+    var legacyAudit=db.collection("auditoria").orderBy("ts","desc").limit(500).onSnapshot(function(snapshot){
+      auditBuckets.legacy=snapshot.docs.map(function(doc){return Object.assign({},doc.data(),{id:doc.id})});
+      mergeAudits()
+    },function(error){console.error("[Auditoria anterior]",error)});
+    state.rootListeners.push(currentAudit,legacyAudit)
+  }
+}
+
+function addAuditToBatch(batch,action,detail,previous,next,inventory){
+  var ref=db.collection("auditoria").doc(auditId());
+  var data={
+    usuarioId:state.user.id,
+    usuario:state.user.name||state.user.username,
+    accion:action,
+    detalle:detail||"",
+    anterior:previous===undefined?null:JSON.stringify(previous),
+    nuevo:next===undefined?null:JSON.stringify(next),
+    createdAt:nowIso(),
+    createdAtServer:serverTimestamp()
+  };
+  batch.set(ref,data)
+}
+
+async function commitChunks(items,writer,size){
+  var step=size||400;
+  for(var i=0;i<items.length;i+=step){
+    var batch=db.batch();
+    items.slice(i,i+step).forEach(function(item){writer(batch,item)});
+    await batch.commit()
+  }
+}
+
+function countSource(){
+  return state.catalog
+}
+function findProduct(value){
+  var key=normalizeSku(value);
+  return countSource().find(function(item){return normalizeSku(item.codigo)===key})||null
+}
+function productSearchResults(value){
+  var query=String(value||"").trim().toLocaleLowerCase("es");
+  if(!query)return [];
+  return countSource().filter(function(item){
+    return String(item.codigo).toLocaleLowerCase("es").includes(query)||
+      String(item.producto).toLocaleLowerCase("es").includes(query)
+  }).slice(0,18)
+}
+function renderProductDropdown(){
+  var dropdown=byId("productDropdown");
+  clearNode(dropdown);
+  var results=productSearchResults(byId("productSearch").value);
+  if(!results.length){dropdown.classList.add("hidden");return}
+  results.forEach(function(item){
+    var button=textNode("button","option");
+    button.type="button";
+    button.setAttribute("role","option");
+    button.dataset.sku=item.codigo;
+    button.appendChild(textNode("div","option-code",item.codigo));
+    button.appendChild(textNode("div","option-name",item.producto));
+    dropdown.appendChild(button)
+  });
+  dropdown.classList.remove("hidden")
+}
+function selectProduct(item){
+  state.selectedProduct=item;
+  byId("productSearch").value=item.codigo;
+  byId("productDropdown").classList.add("hidden");
+  renderSelectedProduct();
+  byId("countQuantity").focus()
+}
+function renderSelectedProduct(){
+  var box=byId("selectedProduct");
+  clearNode(box);
+  if(!state.selectedProduct){
+    box.className="selected-product";
+    box.appendChild(textNode("span","muted","Selecciona un producto para continuar."));
+    return
+  }
+  box.className="selected-product ready";
+  var wrap=document.createElement("div");
+  wrap.appendChild(textNode("div","option-code",state.selectedProduct.codigo));
+  wrap.appendChild(textNode("div","record-product",state.selectedProduct.producto));
+  box.appendChild(wrap)
+}
+
+function renderCountAvailability(){
+  var warning=byId("countUnavailable");
+  var enabled=Boolean(role().count&&state.catalog.length&&state.online);
+  warning.classList.toggle("hidden",enabled);
+  if(!enabled){
+    if(!role().count)warning.textContent="Tu rol es solo de consulta.";
+    else if(!state.catalog.length)warning.textContent="No hay catálogo maestro cargado. Un administrador debe importar los códigos y productos.";
+    else warning.textContent="Se necesita conexión para reservar el siguiente consecutivo sin duplicarlo."
+  }
+  ["productSearch","countQuantity","countLocation","countNote","saveCountButton"].forEach(function(id){
+    byId(id).disabled=!enabled
+  })
+}
+
+function playSavedSignal(){
+  try{
+    var AudioContext=window.AudioContext||window.webkitAudioContext;
+    if(AudioContext){
+      var context=new AudioContext();
+      var oscillator=context.createOscillator();
+      var gain=context.createGain();
+      oscillator.frequency.value=880;
+      gain.gain.setValueAtTime(.06,context.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.001,context.currentTime+.12);
+      oscillator.connect(gain);gain.connect(context.destination);
+      oscillator.start();oscillator.stop(context.currentTime+.12)
+    }
+  }catch(error){}
+  if(navigator.vibrate)navigator.vibrate(70)
+}
+
+async function saveCount(event){
+  event.preventDefault();
+  if(!role().count||!state.catalog.length){
+    toast("Conteo no disponible","Verifica tu permiso y el catálogo.","warning");
+    return
+  }
+  if(!navigator.onLine){
+    toast("Sin conexión","Conéctate para asignar el siguiente código C-0001 sin duplicados.","warning");
+    return
+  }
+  if(!state.selectedProduct){
+    var exact=findProduct(byId("productSearch").value);
+    if(exact)selectProduct(exact);
+    else{toast("Selecciona un producto","Busca o escanea un SKU válido.","warning");return}
+  }
+  var quantity=Number(byId("countQuantity").value);
+  if(!Number.isInteger(quantity)||quantity<0){
+    toast("Cantidad inválida","Ingresa un número entero igual o mayor que cero.","warning");
+    byId("countQuantity").focus();
+    return
+  }
+  var selected=Object.assign({},state.selectedProduct);
+  var location=byId("countLocation").value.trim();
+  var note=byId("countNote").value.trim();
+  var saveButton=byId("saveCountButton");
+  saveButton.disabled=true;
+  saveButton.textContent="Asignando consecutivo…";
+  var ref=db.collection("conteos").doc();
+  var counterRef=db.collection("contadores").doc("conteos");
+  var auditRef=db.collection("auditoria").doc(auditId());
+  try{
+    var entry=await db.runTransaction(async function(transaction){
+      var counterSnapshot=await transaction.get(counterRef);
+      var last=counterSnapshot.exists?Number(counterSnapshot.data().ultimo)||0:0;
+      if(!counterSnapshot.exists){
+        state.records.forEach(function(item){
+          var match=/^C-(\d+)$/.exec(String(item.registroCodigo||""));
+          if(match)last=Math.max(last,Number(match[1])||0)
+        })
+      }
+      var next=last+1;
+      var code=recordCode(next);
+      var created=nowIso();
+      var data={
+        registroCodigo:code,
+        codigo:normalizeSku(selected.codigo),
+        producto:String(selected.producto||""),
+        cantidad:quantity,
+        ubicacion:location,
+        nota:note,
+        estado:"activo",
+        usuarioId:state.user.id,
+        usuario:state.user.name||state.user.username,
+        createdAt:created,
+        createdAtServer:serverTimestamp(),
+        editado:false,
+        historial:[]
+      };
+      transaction.set(counterRef,{ultimo:next,updatedAt:created,updatedAtServer:serverTimestamp()},{merge:true});
+      transaction.set(ref,data);
+      transaction.set(auditRef,{
+        usuarioId:state.user.id,
+        usuario:state.user.name||state.user.username,
+        accion:"REGISTRAR_CONTEO",
+        detalle:code+": "+data.codigo+" × "+quantity,
+        anterior:null,
+        nuevo:JSON.stringify({registroCodigo:code,codigo:data.codigo,cantidad:quantity}),
+        createdAt:created,
+        createdAtServer:serverTimestamp()
+      });
+      return Object.assign({},data,{id:ref.id,_pending:false})
+    });
+    state.lastRecord=entry;
+    renderLastRecord();
+    playSavedSignal();
+    toast("Registro guardado",entry.registroCodigo+" quedó asignado a "+quantity+" unidades.","success");
+    byId("countQuantity").value="";
+    byId("countNote").value="";
+    byId("productSearch").value="";
+    state.selectedProduct=null;
+    renderSelectedProduct();
+    byId("productSearch").focus()
+  }catch(error){
+    console.error("[Guardar conteo]",error);
+    toast("No se pudo guardar","Se conservaron los datos en pantalla. "+error.message,"error")
+  }finally{
+    saveButton.disabled=false;
+    saveButton.innerHTML="";
+    saveButton.appendChild(icon("check"));
+    saveButton.appendChild(document.createTextNode(" Guardar y generar código"))
+  }
+}
+
+function renderLastRecord(){
+  var record=state.lastRecord;
+  byId("lastRecordEmpty").classList.toggle("hidden",Boolean(record));
+  byId("lastRecord").classList.toggle("hidden",!record);
+  if(!record)return;
+  byId("lastRecordCode").textContent=record.registroCodigo;
+  byId("lastRecordSummary").textContent=record.cantidad+" unidades · "+record.producto;
+  byId("lastRecordSync").textContent=record._error?"No sincronizado":record._pending?"Guardado en este dispositivo · pendiente de sincronizar":"Sincronizado"
+}
+
+async function copyCode(code){
+  try{
+    await navigator.clipboard.writeText(code);
+    toast("Código copiado",code,"success")
+  }catch(error){
+    openModal("Copiar código",function(body){
+      var input=modalField(body,"Código de registro","modalCopyCode","text","",code);
+      input.readOnly=true;
+      input.select()
+    },[{label:"Cerrar",onClick:closeModal}])
+  }
+}
+
+function printRecord(record){
+  if(!record)return;
+  var area=byId("printArea");
+  clearNode(area);
+  var label=textNode("section","print-label");
+  label.appendChild(textNode("div","print-status","INVENTARIO · CONTADO"));
+  label.appendChild(textNode("div","print-code",record.registroCodigo));
+  label.appendChild(textNode("div","print-product",record.codigo+" · "+record.producto));
+  var meta=textNode("div","print-meta");
+  meta.appendChild(textNode("span","",record.cantidad+" unidades"));
+  meta.appendChild(textNode("span","",fmtDate(record.createdAt||record.ts,true)));
+  label.appendChild(meta);
+  if(record.ubicacion)label.appendChild(textNode("div","print-meta","Ubicación: "+record.ubicacion));
+  area.appendChild(label);
+  document.body.classList.add("printing");
+  setTimeout(function(){
+    window.print();
+    setTimeout(function(){document.body.classList.remove("printing");clearNode(area)},300)
+  },40)
+}
+
+function activeRecords(){
+  return state.records.filter(function(item){return item.estado==="activo"})
+}
+function populateRecordUserFilter(){
+  var select=byId("recordUserFilter");
+  var previous=select.value;
+  var users=new Map();
+  state.records.forEach(function(item){if(item.usuarioId)users.set(item.usuarioId,item.usuario||item.usuarioId)});
+  clearNode(select);
+  var allOption=document.createElement("option");
+  allOption.value="";allOption.textContent="Todos";select.appendChild(allOption);
+  Array.from(users.entries()).sort(function(a,b){return a[1].localeCompare(b[1])}).forEach(function(pair){
+    var option=document.createElement("option");
+    option.value=pair[0];option.textContent=pair[1];option.selected=pair[0]===previous;
+    select.appendChild(option)
+  })
+}
+
+function recordCard(record){
+  var card=textNode("article","record-card surface");
+  if(record.estado!=="activo")card.style.opacity=".68";
+  var head=textNode("div","record-head");
+  var main=document.createElement("div");
+  main.appendChild(textNode("div","record-card-code",record.registroCodigo||record.ubicacion||record.id));
+  main.appendChild(textNode("div","record-product",record.producto));
+  main.appendChild(textNode("div","hint","SKU "+record.codigo));
+  var statusLabel=record.estado==="archivado"?"ARCHIVADO":record.estado==="anulado"?"ANULADO":record._pending?"PENDIENTE":"ACTIVO";
+  var statusColor=record.estado==="archivado"?"gray":record.estado==="anulado"?"red":record._pending?"amber":"green";
+  var status=textNode("span","badge "+statusColor,statusLabel);
+  head.appendChild(main);head.appendChild(status);card.appendChild(head);
+  var grid=textNode("div","record-grid");
+  [
+    ["Cantidad",record.cantidad],
+    ["Usuario",record.usuario],
+    ["Fecha",fmtDate(record.createdAt||record.ts,true)],
+    ["Ubicación",record.ubicacion||"—"]
+  ].forEach(function(pair){
+    var datum=textNode("div","datum");
+    datum.appendChild(textNode("div","datum-label",pair[0]));
+    datum.appendChild(textNode("div","datum-value",pair[1]));
+    grid.appendChild(datum)
+  });
+  card.appendChild(grid);
+  if(record.nota)card.appendChild(textNode("p","hint","Nota: "+record.nota));
+  var actions=textNode("div","card-actions");
+  actions.appendChild(makeButton("Imprimir","btn sm","print-record",record.id));
+  actions.appendChild(makeButton("Copiar código","btn sm","copy-record",record.id));
+  if(isReviewer()&&record.estado==="activo"){
+    actions.appendChild(makeButton("Recontar / editar","btn sm soft","edit-record",record.id));
+    actions.appendChild(makeButton("Anular","btn sm danger","annul-record",record.id))
+  }
+  if(Array.isArray(record.historial)&&record.historial.length){
+    actions.appendChild(makeButton("Historial","btn sm","history-record",record.id))
+  }
+  card.appendChild(actions);
+  return card
+}
+
+function renderRecords(){
+  populateRecordUserFilter();
+  var query=byId("recordSearch").value.trim().toLocaleLowerCase("es");
+  var user=byId("recordUserFilter").value;
+  var status=byId("recordStatusFilter").value;
+  var filtered=state.records.filter(function(item){
+    var haystack=[item.registroCodigo,item.ubicacion,item.codigo,item.producto,item.usuario].join(" ").toLocaleLowerCase("es");
+    return (!query||haystack.includes(query))&&(!user||item.usuarioId===user)&&(!status||item.estado===status)
+  });
+  byId("recordTotal").textContent=filtered.length+" registro"+(filtered.length===1?"":"s");
+  var list=byId("recordList");clearNode(list);
+  if(!filtered.length){
+    var empty=textNode("div","empty surface");
+    empty.appendChild(icon("tags"));
+    empty.appendChild(textNode("strong","","No hay registros para este filtro"));
+    list.appendChild(empty);
+    return
+  }
+  filtered.forEach(function(record){list.appendChild(recordCard(record))})
+}
+
+function openClearPreviousRecords(){
+  if(!role().reset)return;
+  var previous=state.records.filter(function(item){return item.estado!=="archivado"});
+  if(!previous.length){toast("No hay registros anteriores","La toma actual ya está vacía.","warning");return}
+  openModal("Retirar registros anteriores",function(body){
+    body.appendChild(textNode("div","alert warning","Se retirarán "+previous.length+" registros de la toma actual. Dejarán de sumar en pendientes, diferencias y resumen, pero permanecerán en el historial de auditoría."));
+    body.appendChild(textNode("p","hint","El consecutivo no se reiniciará. El próximo código continuará después del último utilizado."));
+    modalField(body,"Escribe LIMPIAR para confirmar","modalClearConfirmation","text","LIMPIAR","")
+  },[
+    {label:"Cancelar",onClick:closeModal},
+    {label:"Retirar registros",className:"btn danger",onClick:clearPreviousRecords}
+  ])
+}
+
+async function clearPreviousRecords(){
+  if(!role().reset)return;
+  if(normalizeSku(byId("modalClearConfirmation").value)!=="LIMPIAR"){
+    toast("Confirmación incorrecta","Escribe LIMPIAR para continuar.","warning");return
+  }
+  var previous=state.records.filter(function(item){return item.estado!=="archivado"});
+  if(!previous.length){closeModal();return}
+  var buttons=all("#modalFoot button");
+  buttons.forEach(function(button){button.disabled=true});
+  var archivedAt=nowIso();
+  try{
+    await commitChunks(previous,function(batch,item){
+      batch.update(db.collection("conteos").doc(item.id),{
+        estado:"archivado",
+        estadoAnterior:item.estado||"activo",
+        archivadoAt:archivedAt,
+        archivadoAtServer:serverTimestamp(),
+        archivadoPorId:state.user.id,
+        archivadoPor:state.user.name||state.user.username
+      })
+    },350);
+    var auditBatch=db.batch();
+    addAuditToBatch(auditBatch,"ARCHIVAR_CONTEOS",previous.length+" registros retirados de la toma actual",undefined,{total:previous.length,archivadoAt:archivedAt},null);
+    await auditBatch.commit();
+    state.lastRecord=null;
+    byId("recordStatusFilter").value="activo";
+    closeModal();
+    toast("Toma actual limpia",previous.length+" registros quedaron archivados. El consecutivo se conserva.","success")
+  }catch(error){
+    buttons.forEach(function(button){button.disabled=false});
+    toast("No se pudo completar la limpieza","Puedes volver a intentarlo; los registros ya archivados no se repetirán. "+error.message,"error")
+  }
+}
+
+function openEditRecord(id){
+  var record=state.records.find(function(item){return item.id===id});
+  if(!record||!isReviewer())return;
+  openModal("Recontar o editar registro",function(body){
+    var code=textNode("div","alert info",record.registroCodigo+" · "+record.producto);
+    body.appendChild(code);
+    var qty=modalField(body,"Nueva cantidad","modalEditQuantity","number","",record.cantidad);
+    qty.min="0";qty.step="1";qty.inputMode="numeric";
+    modalField(body,"Ubicación","modalEditLocation","text","Pasillo o estante",record.ubicacion||"");
+    modalField(body,"Nota del registro","modalEditNote","textarea","Observación",record.nota||"");
+    modalField(body,"Motivo del cambio","modalEditReason","textarea","Obligatorio para auditoría","")
+  },[
+    {label:"Cancelar",onClick:closeModal},
+    {label:"Guardar cambio",className:"btn primary",onClick:function(){saveRecordEdit(record)}}
+  ])
+}
+
+async function saveRecordEdit(record){
+  var quantity=Number(byId("modalEditQuantity").value);
+  var reason=byId("modalEditReason").value.trim();
+  if(!Number.isInteger(quantity)||quantity<0){toast("Cantidad inválida","Usa un entero igual o mayor que cero.","warning");return}
+  if(!reason){toast("Falta el motivo","Explica por qué se modifica el registro.","warning");return}
+  var previous={cantidad:record.cantidad,ubicacion:record.ubicacion||"",nota:record.nota||""};
+  var next={cantidad:quantity,ubicacion:byId("modalEditLocation").value.trim(),nota:byId("modalEditNote").value.trim()};
+  var history=Array.isArray(record.historial)?record.historial.slice():[];
+  history.push({createdAt:nowIso(),usuarioId:state.user.id,usuario:state.user.name||state.user.username,anterior:previous,nuevo:next,motivo:reason});
+  var update={
+    cantidad:next.cantidad,ubicacion:next.ubicacion,nota:next.nota,
+    editado:true,editadoPor:state.user.name||state.user.username,
+    updatedAt:nowIso(),updatedAtServer:serverTimestamp(),historial:history
+  };
+  var batch=db.batch();
+  batch.update(db.collection("conteos").doc(record.id),update);
+  addAuditToBatch(batch,"EDITAR_CONTEO",record.registroCodigo+": "+reason,previous,next,null);
+  try{
+    await batch.commit();closeModal();
+    toast("Registro actualizado",record.registroCodigo+" conserva el mismo código.","success")
+  }catch(error){toast("No se pudo actualizar",error.message,"error")}
+}
+
+function openAnnulRecord(id){
+  var record=state.records.find(function(item){return item.id===id});
+  if(!record||!isReviewer())return;
+  openModal("Anular registro",function(body){
+    body.appendChild(textNode("div","alert warning","Se conservará en auditoría, pero dejará de sumar al inventario."));
+    body.appendChild(textNode("p","",record.registroCodigo+" · "+record.producto+" · "+record.cantidad+" unidades"));
+    modalField(body,"Motivo de anulación","modalAnnulReason","textarea","Obligatorio","")
+  },[
+    {label:"Cancelar",onClick:closeModal},
+    {label:"Anular registro",className:"btn danger",onClick:function(){annulRecord(record)}}
+  ])
+}
+
+async function annulRecord(record){
+  var reason=byId("modalAnnulReason").value.trim();
+  if(!reason){toast("Falta el motivo","Escribe la razón de la anulación.","warning");return}
+  var update={estado:"anulado",anuladoPor:state.user.name||state.user.username,anuladoPorId:state.user.id,anuladoAt:nowIso(),motivoAnulacion:reason,updatedAtServer:serverTimestamp()};
+  var batch=db.batch();
+  batch.update(db.collection("conteos").doc(record.id),update);
+  addAuditToBatch(batch,"ANULAR_CONTEO",record.registroCodigo+": "+reason,{estado:record.estado},{estado:"anulado"},null);
+  try{await batch.commit();closeModal();toast("Registro anulado",record.registroCodigo+" ya no suma al total.","success")}
+  catch(error){toast("No se pudo anular",error.message,"error")}
+}
+
+function showRecordHistory(id){
+  var record=state.records.find(function(item){return item.id===id});
+  if(!record)return;
+  openModal("Historial · "+record.registroCodigo,function(body){
+    var history=Array.isArray(record.historial)?record.historial:[];
+    history.slice().reverse().forEach(function(item){
+      var card=textNode("div","datum");
+      card.style.marginBottom="8px";
+      card.appendChild(textNode("div","datum-value",(item.usuario||"Usuario")+" · "+fmtDate(item.createdAt,true)));
+      card.appendChild(textNode("div","hint","Cantidad: "+item.anterior.cantidad+" → "+item.nuevo.cantidad));
+      card.appendChild(textNode("div","hint","Motivo: "+item.motivo));
+      body.appendChild(card)
+    })
+  },[{label:"Cerrar",onClick:closeModal}])
+}
+
+function statCard(value,label,color){
+  var card=textNode("div","stat");
+  var number=textNode("div","stat-value",value);
+  if(color)number.style.color="var(--"+color+")";
+  card.appendChild(number);
+  card.appendChild(textNode("div","stat-label",label));
+  return card
+}
+
+function renderPending(){
+  var records=activeRecords();
+  var counted=new Set(records.map(function(item){return normalizeSku(item.codigo)}));
+  var catalogCodes=new Set(state.catalog.map(function(item){return normalizeSku(item.codigo)}));
+  var countedValid=Array.from(counted).filter(function(code){return catalogCodes.has(code)}).length;
+  var total=state.catalog.length;
+  var pending=Math.max(0,total-countedValid);
+  var percent=total?Math.round(countedValid/total*100):0;
+  var stats=byId("pendingStats");clearNode(stats);
+  stats.appendChild(statCard(total,"En catálogo"));
+  stats.appendChild(statCard(countedValid,"Productos contados","brand-strong"));
+  stats.appendChild(statCard(pending,"Pendientes","red"));
+  var progress=textNode("div","stat");
+  progress.appendChild(textNode("div","stat-value",percent+"%"));
+  progress.appendChild(textNode("div","stat-label","Avance"));
+  var bar=textNode("div","progress");
+  var fill=document.createElement("span");fill.style.width=percent+"%";bar.appendChild(fill);
+  progress.appendChild(bar);stats.appendChild(progress);
+
+  var query=byId("pendingSearch").value.trim().toLocaleLowerCase("es");
+  var list=byId("pendingList");clearNode(list);
+  var items=state.catalog.filter(function(item){
+    var isPending=!counted.has(normalizeSku(item.codigo));
+    var match=!query||String(item.codigo).toLocaleLowerCase("es").includes(query)||String(item.producto).toLocaleLowerCase("es").includes(query);
+    return isPending&&match
+  });
+  if(!state.catalog.length){
+    list.appendChild(textNode("div","empty","Carga un catálogo para calcular pendientes."));
+    return
+  }
+  if(!items.length){
+    list.appendChild(textNode("div","empty",query?"No hay pendientes que coincidan.":"Todos los productos fueron contados."));
+    return
+  }
+  items.slice(0,300).forEach(function(item){
+    var row=textNode("div","list-row");
+    var info=document.createElement("div");
+    info.appendChild(textNode("div","option-code",item.codigo));
+    info.appendChild(textNode("div","datum-value",item.producto));
+    row.appendChild(info);
+    row.appendChild(textNode("span","badge amber","Pendiente"));
+    list.appendChild(row)
+  });
+  if(items.length>300)list.appendChild(textNode("p","hint","Mostrando 300 de "+items.length+" pendientes. Usa la búsqueda para filtrar."))
+}
+
+function comparisonRows(){
+  var map=new Map();
+  var stockMap=new Map();
+  state.existences.forEach(function(item){stockMap.set(normalizeSku(item.codigo),item)});
+  state.catalog.forEach(function(item){
+    var code=normalizeSku(item.codigo);
+    var stock=stockMap.get(code);
+    map.set(normalizeSku(item.codigo),{
+      codigo:code,
+      producto:item.producto,
+      existencia:stock?Number(stock.existencia):null,
+      contado:0,
+      registros:0,
+      contadoAlgunaVez:false,
+      sinCatalogo:false,
+      sinExistencia:!stock
+    })
+  });
+  state.existences.forEach(function(item){
+    var code=normalizeSku(item.codigo);
+    if(!map.has(code)){
+      map.set(code,{
+        codigo:code,
+        producto:item.producto||"Sin descripción en catálogo",
+        existencia:Number(item.existencia),
+        contado:0,
+        registros:0,
+        contadoAlgunaVez:false,
+        sinCatalogo:true,
+        sinExistencia:false
+      })
+    }
+  });
+  activeRecords().forEach(function(record){
+    var code=normalizeSku(record.codigo);
+    if(!map.has(code)){
+      var stock=stockMap.get(code);
+      map.set(code,{codigo:code,producto:record.producto,existencia:stock?Number(stock.existencia):null,contado:0,registros:0,contadoAlgunaVez:false,sinCatalogo:true,sinExistencia:!stock})
+    }
+    var row=map.get(code);
+    row.contado+=Number(record.cantidad)||0;
+    row.registros+=1;
+    row.contadoAlgunaVez=true
+  });
+  return Array.from(map.values()).map(function(row){
+    row.diferencia=row.sinExistencia?null:row.contado-row.existencia;
+    return row
+  })
+}
+
+function filteredDifferences(){
+  var query=byId("differenceSearch").value.trim().toLocaleLowerCase("es");
+  var filter=byId("differenceFilter").value;
+  return comparisonRows().filter(function(row){
+    var match=!query||row.codigo.toLocaleLowerCase("es").includes(query)||String(row.producto).toLocaleLowerCase("es").includes(query);
+    if(!match)return false;
+    if(filter==="diff")return row.contadoAlgunaVez&&!row.sinExistencia&&row.diferencia!==0;
+    if(filter==="ok")return row.contadoAlgunaVez&&!row.sinExistencia&&row.diferencia===0;
+    if(filter==="faltante")return row.contadoAlgunaVez&&!row.sinExistencia&&row.diferencia<0;
+    if(filter==="sobrante")return row.contadoAlgunaVez&&!row.sinExistencia&&row.diferencia>0;
+    if(filter==="pendiente")return !row.contadoAlgunaVez;
+    if(filter==="sin-existencia")return row.sinExistencia;
+    return true
+  }).sort(function(a,b){
+    if(a.contadoAlgunaVez!==b.contadoAlgunaVez)return a.contadoAlgunaVez?-1:1;
+    if(a.sinExistencia!==b.sinExistencia)return a.sinExistencia?1:-1;
+    return Math.abs(b.diferencia||0)-Math.abs(a.diferencia||0)
+  })
+}
+
+function renderDifferences(){
+  var allRows=comparisonRows();
+  var counted=allRows.filter(function(row){return row.contadoAlgunaVez&&!row.sinExistencia});
+  var differing=counted.filter(function(row){return row.diferencia!==0});
+  var matches=counted.length-differing.length;
+  var availability=byId("differenceAvailability");
+  var hasStock=state.existences.length>0;
+  availability.classList.toggle("hidden",hasStock);
+  availability.textContent=hasStock?"":"Todavía no se han publicado las existencias del sistema. Puedes seguir contando; las diferencias se calcularán automáticamente cuando se carguen.";
+  byId("exportCsv").disabled=!hasStock;
+  byId("printReport").disabled=!hasStock;
+  var stats=byId("differenceStats");clearNode(stats);
+  stats.appendChild(statCard(counted.length,"Productos comparables"));
+  stats.appendChild(statCard(differing.length,"Con diferencia","red"));
+  stats.appendChild(statCard(matches,"Sin diferencia","brand-strong"));
+  stats.appendChild(statCard(activeRecords().reduce(function(sum,item){return sum+(Number(item.cantidad)||0)},0),"Unidades contadas"));
+
+  var list=byId("differenceList");clearNode(list);
+  var header=textNode("div","diff-row diff-head");
+  ["Producto","Sistema","Contado","Diferencia"].forEach(function(value,index){
+    header.appendChild(textNode("div",index?"num":"",value))
+  });
+  list.appendChild(header);
+  var rows=filteredDifferences();
+  if(!rows.length){
+    list.appendChild(textNode("div","empty","No hay resultados para este filtro."));
+    return
+  }
+  rows.slice(0,500).forEach(function(row){
+    var line=textNode("div","diff-row");
+    var product=document.createElement("div");
+    product.appendChild(textNode("div","option-code",row.codigo));
+    product.appendChild(textNode("div","datum-value",row.producto));
+    if(!row.contadoAlgunaVez)product.appendChild(textNode("span","badge amber","Pendiente"));
+    if(row.sinCatalogo)product.appendChild(textNode("span","badge red","Fuera de catálogo"));
+    if(row.sinExistencia)product.appendChild(textNode("span","badge gray","Sin existencia"));
+    line.appendChild(product);
+    line.appendChild(textNode("div","num",row.sinExistencia?"—":row.existencia));
+    line.appendChild(textNode("div","num",row.contadoAlgunaVez?row.contado:"—"));
+    var diffText=!row.contadoAlgunaVez||row.sinExistencia?"—":(row.diferencia>0?"+":"")+row.diferencia;
+    var diffClass=!row.contadoAlgunaVez||row.sinExistencia?"num":row.diferencia===0?"num match":row.diferencia>0?"num positive":"num negative";
+    line.appendChild(textNode("div",diffClass,diffText));
+    list.appendChild(line)
+  })
+}
+
+function renderDashboard(){
+  var records=activeRecords();
+  var countedRows=comparisonRows().filter(function(row){return row.contadoAlgunaVez});
+  var rows=countedRows.filter(function(row){return !row.sinExistencia});
+  var countedSkus=countedRows.length;
+  var totalUnits=records.reduce(function(sum,item){return sum+(Number(item.cantidad)||0)},0);
+  var diff=rows.filter(function(row){return row.diferencia!==0}).length;
+  var users=new Set(records.map(function(item){return item.usuarioId||item.usuario})).size;
+  var stats=byId("dashboardStats");clearNode(stats);
+  stats.appendChild(statCard(records.length,"Registros"));
+  stats.appendChild(statCard(countedSkus,"Productos"));
+  stats.appendChild(statCard(totalUnits,"Unidades"));
+  stats.appendChild(statCard(diff,"Con diferencia",diff?"red":"brand-strong"));
+
+  var byUser=new Map();
+  records.forEach(function(record){
+    var key=record.usuario||"Sin usuario";
+    byUser.set(key,(byUser.get(key)||0)+1)
+  });
+  var userList=byId("dashboardUsers");clearNode(userList);
+  var userRows=Array.from(byUser.entries()).sort(function(a,b){return b[1]-a[1]});
+  var max=userRows.length?userRows[0][1]:1;
+  if(!userRows.length)userList.appendChild(textNode("div","empty","Sin registros."));
+  userRows.forEach(function(pair){
+    var row=textNode("div","list-row");
+    row.appendChild(textNode("span","small",pair[0]));
+    var bar=textNode("div","bar");var fill=document.createElement("span");fill.style.width=Math.round(pair[1]/max*100)+"%";bar.appendChild(fill);
+    row.appendChild(bar);row.appendChild(textNode("strong","",pair[1]));userList.appendChild(row)
+  });
+
+  var recent=byId("dashboardRecent");clearNode(recent);
+  if(!records.length)recent.appendChild(textNode("div","empty","Sin registros."));
+  records.slice(0,7).forEach(function(record){
+    var row=textNode("div","list-row");
+    var info=document.createElement("div");
+    info.appendChild(textNode("div","option-code",record.registroCodigo));
+    info.appendChild(textNode("div","small",shortText(record.producto,32)));
+    row.appendChild(info);row.appendChild(textNode("strong","",record.cantidad));recent.appendChild(row)
+  });
+
+  var top=byId("dashboardDifferences");clearNode(top);
+  var topRows=rows.filter(function(row){return row.diferencia!==0})
+    .sort(function(a,b){return Math.abs(b.diferencia)-Math.abs(a.diferencia)}).slice(0,10);
+  if(!topRows.length)top.appendChild(textNode("div","empty","No hay diferencias en productos contados."));
+  topRows.forEach(function(item){
+    var row=textNode("div","list-row");
+    var info=document.createElement("div");
+    info.appendChild(textNode("div","option-code",item.codigo));
+    info.appendChild(textNode("div","small",item.producto));
+    row.appendChild(info);
+    row.appendChild(textNode("strong",item.diferencia>0?"positive":"negative",(item.diferencia>0?"+":"")+item.diferencia));
+    top.appendChild(row)
+  })
+}
+
+function renderAudit(){
+  var list=byId("auditList");clearNode(list);
+  if(!byId("auditSearch"))return;
+  var query=byId("auditSearch").value.trim().toLocaleLowerCase("es");
+  var items=state.audits.filter(function(item){
+    return !query||[item.accion,item.usuario,item.detalle].join(" ").toLocaleLowerCase("es").includes(query)
+  });
+  byId("auditTotal").textContent=items.length+" evento"+(items.length===1?"":"s");
+  if(!items.length){
+    var empty=textNode("div","empty surface","No hay eventos para mostrar.");
+    list.appendChild(empty);return
+  }
+  items.forEach(function(item){
+    var card=textNode("article","record-card surface");
+    var head=textNode("div","record-head");
+    var info=document.createElement("div");
+    info.appendChild(textNode("div","record-card-code",String(item.accion||"EVENTO").replace(/_/g," ")));
+    info.appendChild(textNode("div","small",item.detalle||""));
+    head.appendChild(info);head.appendChild(textNode("span","badge gray",item.usuario||"Sistema"));
+    card.appendChild(head);
+    card.appendChild(textNode("div","hint",fmtDate(item.createdAt||item.ts,true)));
+    list.appendChild(card)
+  })
+}
+
+function csvCell(value){
+  var string=String(value===undefined||value===null?"":value);
+  if(/^[=+\-@]/.test(string))string="'"+string;
+  return '"'+string.replace(/"/g,'""')+'"'
+}
+function downloadBlob(content,type,name){
+  var blob=new Blob([content],{type:type});
+  var url=URL.createObjectURL(blob);
+  var link=document.createElement("a");
+  link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();
+  setTimeout(function(){URL.revokeObjectURL(url)},1000)
+}
+function exportDifferences(){
+  if(!state.existences.length){toast("Existencias pendientes","Publica primero el archivo de existencias del sistema.","warning");return}
+  var rows=filteredDifferences();
+  if(!rows.length){toast("Sin datos","No hay resultados para exportar.","warning");return}
+  var data=[["Codigo","Producto","Existencia sistema","Contado","Diferencia","Estado"]];
+  rows.forEach(function(row){
+    var status=row.sinExistencia?"Sin existencia":!row.contadoAlgunaVez?"Pendiente":row.diferencia===0?"OK":row.diferencia>0?"Sobrante":"Faltante";
+    data.push([row.codigo,row.producto,row.sinExistencia?"":row.existencia,row.contadoAlgunaVez?row.contado:"",row.contadoAlgunaVez&&!row.sinExistencia?row.diferencia:"",status])
+  });
+  var csv="\uFEFF"+data.map(function(row){return row.map(csvCell).join(",")}).join("\r\n");
+  downloadBlob(csv,"text/csv;charset=utf-8","diferencias_inventario_"+nowIso().slice(0,10)+".csv");
+  toast("Reporte descargado",rows.length+" productos en CSV.","success")
+}
+function printDifferenceReport(){
+  if(!state.existences.length){toast("Existencias pendientes","Publica primero el archivo de existencias del sistema.","warning");return}
+  var rows=filteredDifferences();
+  if(!rows.length){toast("Sin datos","No hay resultados para imprimir.","warning");return}
+  var area=byId("printArea");clearNode(area);
+  var report=textNode("section","report-print");
+  report.appendChild(textNode("h1","","Reporte de diferencias de inventario"));
+  report.appendChild(textNode("p","",fmtDate(nowIso(),true)+" · "+rows.length+" productos"));
+  var table=document.createElement("table");
+  var head=document.createElement("thead");var hr=document.createElement("tr");
+  ["Código","Producto","Sistema","Contado","Diferencia","Estado"].forEach(function(value){hr.appendChild(textNode("th","",value))});
+  head.appendChild(hr);table.appendChild(head);
+  var body=document.createElement("tbody");
+  rows.forEach(function(row){
+    var tr=document.createElement("tr");
+    var status=row.sinExistencia?"Sin existencia":!row.contadoAlgunaVez?"Pendiente":row.diferencia===0?"OK":row.diferencia>0?"Sobrante":"Faltante";
+    [row.codigo,row.producto,row.sinExistencia?"—":row.existencia,row.contadoAlgunaVez?row.contado:"—",row.contadoAlgunaVez&&!row.sinExistencia?row.diferencia:"—",status].forEach(function(value){
+      tr.appendChild(textNode("td","",value))
+    });
+    body.appendChild(tr)
+  });
+  table.appendChild(body);report.appendChild(table);area.appendChild(report);
+  document.body.classList.add("printing");
+  setTimeout(function(){window.print();setTimeout(function(){document.body.classList.remove("printing");clearNode(area)},300)},40)
+}
+
+function detectDelimiter(text){
+  var first=String(text||"").split(/\r?\n/,1)[0];
+  var comma=0,semicolon=0,quoted=false;
+  for(var i=0;i<first.length;i++){
+    if(first[i]==='"')quoted=!quoted;
+    else if(!quoted&&first[i]===",")comma++;
+    else if(!quoted&&first[i]===";")semicolon++
+  }
+  return semicolon>comma?";":","
+}
+function parseDelimited(text,delimiter){
+  var rows=[],row=[],field="",quoted=false;
+  for(var i=0;i<text.length;i++){
+    var char=text[i];
+    if(quoted){
+      if(char==='"'&&text[i+1]==='"'){field+='"';i++}
+      else if(char==='"')quoted=false;
+      else field+=char
+    }else{
+      if(char==='"')quoted=true;
+      else if(char===delimiter){row.push(field);field=""}
+      else if(char==="\n"){row.push(field);rows.push(row);row=[];field=""}
+      else if(char!=="\r")field+=char
+    }
+  }
+  row.push(field);
+  if(row.some(function(value){return value.trim()!==""}))rows.push(row);
+  return rows
+}
+function csvData(text){
+  var clean=String(text||"").replace(/^\uFEFF/,"");
+  var delimiter=detectDelimiter(clean);
+  var rows=parseDelimited(clean,delimiter);
+  if(!rows.length)throw new Error("El archivo está vacío.");
+  var headers=rows[0].map(function(value){
+    return value.trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+  });
+  return {rows:rows,headers:headers,delimiter:delimiter}
+}
+
+function parseMasterCatalogCsv(text){
+  var data=csvData(text);
+  var ci=data.headers.indexOf("codigo");
+  var pi=data.headers.indexOf("producto");
+  if(ci<0||pi<0)throw new Error("Faltan las columnas codigo o producto.");
+  var seen=new Set(),items=[],invalid=0,duplicates=0;
+  data.rows.slice(1).forEach(function(columns){
+    var code=normalizeSku(columns[ci]);
+    var product=String(columns[pi]||"").trim();
+    if(!code||!product){invalid++;return}
+    if(seen.has(code)){duplicates++;return}
+    seen.add(code);items.push({codigo:code,producto:product})
+  });
+  if(!items.length)throw new Error("No se encontraron productos válidos.");
+  return {items:items,invalid:invalid,duplicates:duplicates}
+}
+
+function parseStockCsv(text){
+  var data=csvData(text);
+  var ci=data.headers.indexOf("codigo");
+  var pi=data.headers.indexOf("producto");
+  var ei=data.headers.indexOf("existencia");
+  if(ci<0||ei<0)throw new Error("Faltan las columnas codigo o existencia.");
+  var seen=new Set(),items=[],invalid=0,duplicates=0;
+  data.rows.slice(1).forEach(function(columns){
+    var code=normalizeSku(columns[ci]);
+    var product=pi>=0?String(columns[pi]||"").trim():"";
+    var raw=String(columns[ei]||"").trim().replace(/\s/g,"");
+    if(data.delimiter===";"&&raw.includes(",")&&!raw.includes("."))raw=raw.replace(",",".");
+    var stock=Number(raw);
+    if(!code||!Number.isFinite(stock)||stock<0){invalid++;return}
+    if(seen.has(code)){duplicates++;return}
+    seen.add(code);items.push({codigo:code,producto:product,existencia:stock})
+  });
+  if(!items.length)throw new Error("No se encontraron existencias válidas.");
+  return {items:items,invalid:invalid,duplicates:duplicates}
+}
+
+function handleMasterCatalogFile(file){
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(){
+    var resultBox=byId("masterCatalogImportResult");clearNode(resultBox);
+    try{
+      var parsed=parseMasterCatalogCsv(reader.result);
+      state.masterImportDraft=parsed.items;
+      resultBox.appendChild(textNode("div","alert info",parsed.items.length+" productos válidos. "+parsed.invalid+" filas inválidas y "+parsed.duplicates+" duplicados omitidos."));
+      var button=makeButton("Publicar catálogo maestro","btn primary");
+      button.addEventListener("click",importMasterCatalog);resultBox.appendChild(button);
+      renderMasterCatalogPreview(parsed.items)
+    }catch(error){
+      state.masterImportDraft=null;resultBox.appendChild(textNode("div","alert error",error.message))
+    }
+  };
+  reader.onerror=function(){toast("No se pudo leer el archivo","Intenta seleccionarlo nuevamente.","error")};
+  reader.readAsText(file,"UTF-8")
+}
+
+function handleStockFile(file){
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(){
+    var resultBox=byId("stockImportResult");clearNode(resultBox);
+    try{
+      var parsed=parseStockCsv(reader.result);
+      state.stockImportDraft=parsed.items;
+      resultBox.appendChild(textNode("div","alert info",parsed.items.length+" existencias válidas. "+parsed.invalid+" filas inválidas y "+parsed.duplicates+" duplicados omitidos."));
+      var button=makeButton("Publicar existencias","btn primary");
+      button.addEventListener("click",importStock);resultBox.appendChild(button);
+      renderStockPreview(parsed.items)
+    }catch(error){
+      state.stockImportDraft=null;resultBox.appendChild(textNode("div","alert error",error.message))
+    }
+  };
+  reader.onerror=function(){toast("No se pudo leer el archivo","Intenta seleccionarlo nuevamente.","error")};
+  reader.readAsText(file,"UTF-8")
+}
+
+async function importMasterCatalog(){
+  var items=state.masterImportDraft;
+  if(!role().catalog||!Array.isArray(items)||!items.length)return;
+  var button=byId("masterCatalogImportResult").querySelector("button");
+  button.disabled=true;button.textContent="Publicando…";
+  var version="CAT-"+Date.now()+"-"+randomToken(4);
+  try{
+    await commitChunks(items,function(batch,item){
+      batch.set(db.collection("catalogo_items").doc(version+"_"+docIdForSku(item.codigo)),{
+        version:version,codigo:item.codigo,producto:item.producto,updatedAt:nowIso(),updatedBy:state.user.id
+      })
+    });
+    var batch=db.batch();
+    batch.set(db.collection("config").doc("catalogo"),{
+      activeVersion:version,total:items.length,updatedAt:nowIso(),updatedAtServer:serverTimestamp(),updatedBy:state.user.id,updatedByName:state.user.name||state.user.username
+    });
+    addAuditToBatch(batch,"IMPORTAR_CATALOGO","Catálogo maestro publicado con "+items.length+" productos",undefined,{version:version,total:items.length},null);
+    await batch.commit();
+    state.catalog=items.slice().sort(function(a,b){return a.codigo.localeCompare(b.codigo)});
+    state.catalogVersion=version;state.catalogFromLegacy=false;state.masterImportDraft=null;
+    byId("masterCatalogFile").value="";clearNode(byId("masterCatalogImportResult"));
+    renderAll();toast("Catálogo publicado",items.length+" productos disponibles para conteo.","success")
+  }catch(error){
+    button.disabled=false;button.textContent="Reintentar publicación";
+    toast("No se pudo publicar",error.message+". El catálogo anterior sigue activo.","error")
+  }
+}
+
+async function importStock(){
+  var items=state.stockImportDraft;
+  if(!role().catalog||!Array.isArray(items)||!items.length)return;
+  var button=byId("stockImportResult").querySelector("button");
+  button.disabled=true;button.textContent="Publicando…";
+  var version="EXT-"+Date.now()+"-"+randomToken(4);
+  try{
+    await commitChunks(items,function(batch,item){
+      batch.set(db.collection("existencia_items").doc(version+"_"+docIdForSku(item.codigo)),{
+        version:version,codigo:item.codigo,producto:item.producto,existencia:item.existencia,updatedAt:nowIso(),updatedBy:state.user.id
+      })
+    });
+    var batch=db.batch();
+    batch.set(db.collection("config").doc("existencias"),{
+      activeVersion:version,total:items.length,updatedAt:nowIso(),updatedAtServer:serverTimestamp(),updatedBy:state.user.id,updatedByName:state.user.name||state.user.username
+    });
+    addAuditToBatch(batch,"IMPORTAR_EXISTENCIAS","Existencias publicadas para "+items.length+" códigos",undefined,{version:version,total:items.length},null);
+    await batch.commit();
+    state.existences=items.slice().sort(function(a,b){return a.codigo.localeCompare(b.codigo)});
+    state.existenceVersion=version;state.existenceFromLegacy=false;state.stockImportDraft=null;
+    byId("stockFile").value="";clearNode(byId("stockImportResult"));
+    renderAll();toast("Existencias publicadas",items.length+" códigos disponibles para comparar.","success")
+  }catch(error){
+    button.disabled=false;button.textContent="Reintentar publicación";
+    toast("No se pudieron publicar",error.message+". Las existencias anteriores siguen activas.","error")
+  }
+}
+
+function renderPreview(wrapId,items,columns){
+  var wrap=byId(wrapId);clearNode(wrap);
+  if(!items||!items.length)return;
+  var table=document.createElement("table");
+  var head=document.createElement("thead");var hr=document.createElement("tr");
+  columns.forEach(function(column){hr.appendChild(textNode("th","",column.label))});
+  head.appendChild(hr);table.appendChild(head);
+  var body=document.createElement("tbody");
+  items.slice(0,10).forEach(function(item){
+    var row=document.createElement("tr");
+    columns.forEach(function(column){row.appendChild(textNode("td","",column.value(item)))});
+    body.appendChild(row)
+  });
+  table.appendChild(body);wrap.appendChild(table);
+  if(items.length>10)wrap.appendChild(textNode("p","hint","Vista previa de 10 filas de "+items.length+"."))
+}
+function renderMasterCatalogPreview(items){
+  renderPreview("masterCatalogPreview",items,[
+    {label:"Código",value:function(item){return item.codigo}},
+    {label:"Producto",value:function(item){return item.producto}}
+  ])
+}
+function renderStockPreview(items){
+  var names=new Map(state.catalog.map(function(item){return [normalizeSku(item.codigo),item.producto]}));
+  renderPreview("stockPreview",items,[
+    {label:"Código",value:function(item){return item.codigo}},
+    {label:"Producto",value:function(item){return item.producto||names.get(normalizeSku(item.codigo))||"—"}},
+    {label:"Existencia",value:function(item){return item.existencia}}
+  ])
+}
+function renderCatalog(){
+  if(!byId("masterCatalogCountBadge"))return;
+  byId("masterCatalogCountBadge").textContent=state.catalog.length+" producto"+(state.catalog.length===1?"":"s");
+  byId("masterCatalogMeta").textContent=state.catalogVersion?"Versión "+state.catalogVersion:state.catalogFromLegacy?"Catálogo anterior compatible":"Sin catálogo publicado";
+  byId("stockCountBadge").textContent=state.existences.length+" existencia"+(state.existences.length===1?"":"s");
+  byId("stockMeta").textContent=state.existenceVersion?"Versión "+state.existenceVersion:state.existenceFromLegacy?"Existencias anteriores compatibles":"Pendiente de cargar";
+  if(!state.masterImportDraft)renderMasterCatalogPreview(state.catalog);
+  if(!state.stockImportDraft)renderStockPreview(state.existences)
+}
+
+function openProfileModal(id){
+  if(!role().users)return;
+  var editing=state.users.find(function(item){return item.id===id})||null;
+  openModal(editing?"Editar perfil":"Agregar perfil",function(body){
+    var uid=modalField(body,"UID de Firebase Authentication","modalProfileUid","text","Identificador de la cuenta",editing?editing.id:"");
+    if(editing)uid.readOnly=true;
+    modalField(body,"Nombre completo","modalProfileName","text","Nombre visible",editing?editing.name:"");
+    modalField(body,"Usuario","modalProfileUsername","text","Ej: bodega1",editing?editing.username:"");
+    modalSelect(body,"Rol","modalProfileRole",[
+      {value:"admin",label:"Administrador"},{value:"supervisor",label:"Supervisor"},
+      {value:"conteador",label:"Conteador"},{value:"consulta",label:"Consulta"}
+    ],editing?editing.role:"conteador");
+    var wrap=textNode("label","",null);
+    wrap.style.display="flex";wrap.style.alignItems="center";wrap.style.gap="8px";
+    var active=document.createElement("input");active.type="checkbox";active.id="modalProfileActive";active.style.width="auto";
+    active.checked=editing?editing.active!==false:true;
+    wrap.appendChild(active);wrap.appendChild(document.createTextNode("Usuario activo"));body.appendChild(wrap)
+  },[
+    {label:"Cancelar",onClick:closeModal},
+    {label:"Guardar perfil",className:"btn primary",onClick:function(){saveProfile(editing)}}
+  ])
+}
+
+async function saveProfile(editing){
+  var uid=byId("modalProfileUid").value.trim();
+  var name=byId("modalProfileName").value.trim();
+  var username=byId("modalProfileUsername").value.trim().toLowerCase().replace(/\s+/g,"");
+  var userRole=byId("modalProfileRole").value;
+  var active=byId("modalProfileActive").checked;
+  if(!uid||!name||!username){toast("Faltan datos","Completa UID, nombre y usuario.","warning");return}
+  if(editing&&editing.id===state.user.id&&!active){toast("Acción no permitida","No puedes desactivar tu propio perfil.","warning");return}
+  var previous=editing?{name:editing.name,username:editing.username,role:editing.role,active:editing.active}:undefined;
+  var profile={name:name,username:username,email:buildEmail(username),role:userRole,active:active,updatedAt:nowIso(),updatedAtServer:serverTimestamp()};
+  if(!editing){profile.createdAt=nowIso();profile.createdAtServer=serverTimestamp()}
+  var batch=db.batch();
+  batch.set(db.collection("usuarios").doc(uid),profile,{merge:true});
+  addAuditToBatch(batch,editing?"EDITAR_USUARIO":"CREAR_USUARIO",name,previous,{username:username,role:userRole,active:active},null);
+  try{await batch.commit();closeModal();toast("Perfil guardado",name+" ya tiene permisos asignados.","success")}
+  catch(error){toast("No se pudo guardar el perfil",error.message,"error")}
+}
+
+function renderUsers(){
+  if(!byId("userList"))return;
+  var list=byId("userList");clearNode(list);
+  if(!state.users.length){list.appendChild(textNode("div","empty surface","No hay perfiles para mostrar."));return}
+  state.users.forEach(function(user){
+    var card=textNode("article","record-card surface");
+    var head=textNode("div","record-head");
+    var info=document.createElement("div");
+    info.appendChild(textNode("div","record-product",user.name||"Sin nombre"));
+    info.appendChild(textNode("div","hint","@"+(user.username||"sin-usuario")+" · "+user.id));
+    head.appendChild(info);
+    var badges=textNode("div","");
+    badges.appendChild(textNode("span","badge blue",ROLES[user.role]?ROLES[user.role].label:user.role));
+    if(user.active===false)badges.appendChild(textNode("span","badge red","Inactivo"));
+    head.appendChild(badges);card.appendChild(head);
+    var actions=textNode("div","card-actions");
+    actions.appendChild(makeButton("Editar","btn sm","edit-profile",user.id));
+    card.appendChild(actions);list.appendChild(card)
+  })
+}
+
+function renderAll(){
+  renderCountAvailability();
+  renderSelectedProduct();
+  renderRecords();
+  renderPending();
+  renderDifferences();
+  renderDashboard();
+  renderAudit();
+  renderCatalog();
+  renderUsers();
+  renderLastRecord();
+  syncStatus()
+}
+
+function showTab(name){
+  all(".screen").forEach(function(screen){screen.classList.toggle("active",screen.id==="tab-"+name)});
+  all(".nav-btn").forEach(function(button){
+    var active=button.dataset.tab===name;
+    button.classList.toggle("active",active);
+    button.setAttribute("aria-selected",active?"true":"false")
+  });
+  if(name==="count")setTimeout(function(){if(!byId("productSearch").disabled)byId("productSearch").focus()},0)
+}
+
+var loginError="";
+function initializeFirebase(){
+  try{
+    if(!window.firebase)throw new Error("No se pudo cargar el servicio de datos.");
+    if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+    db=firebase.firestore();auth=firebase.auth();
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(error){console.warn("[Sesion]",error.message)});
+    db.enablePersistence({synchronizeTabs:true}).catch(function(error){
+      if(error.code!=="failed-precondition"&&error.code!=="unimplemented")console.warn("[Persistencia]",error.message)
+    });
+    auth.onAuthStateChanged(async function(user){
+      clearListeners(state.rootListeners);clearListeners(state.scopedListeners);
+      if(!user){
+        state.user=null;state.firebaseUser=null;state.records=[];state.audits=[];state.users=[];state.lastRecord=null;
+        showLogin(loginError);loginError="";return
+      }
+      try{await loadProfile(user)}
+      catch(error){
+        loginError=error.message||"No se pudo verificar tu perfil.";
+        await auth.signOut()
+      }
+    })
+  }catch(error){
+    showLogin(error.message);
+    byId("loginButton").disabled=true
+  }
+}
+
+async function login(event){
+  event.preventDefault();
+  if(!auth)return;
+  var username=byId("loginUser").value.trim();
+  var password=byId("loginPass").value;
+  if(!username||!password){
+    byId("loginAlert").textContent="Ingresa usuario y contraseña.";
+    byId("loginAlert").classList.remove("hidden");return
+  }
+  var button=byId("loginButton");button.disabled=true;button.textContent="Ingresando…";
+  byId("loginAlert").classList.add("hidden");
+  try{await auth.signInWithEmailAndPassword(buildEmail(username),password)}
+  catch(error){
+    var message=error.code==="auth/network-request-failed"?"Sin conexión a internet.":"Usuario o contraseña incorrectos.";
+    byId("loginAlert").textContent=message;byId("loginAlert").classList.remove("hidden")
+  }finally{
+    button.disabled=false;button.innerHTML="";button.appendChild(icon("login"));button.appendChild(document.createTextNode(" Ingresar"))
+  }
+}
+
+function bindEvents(){
+  byId("loginForm").addEventListener("submit",login);
+  byId("logoutButton").addEventListener("click",function(){if(auth)auth.signOut()});
+  byId("themeCycle").addEventListener("click",function(){
+    var modes=["auto","light","dark"];
+    var current=document.body.dataset.theme||"auto";
+    setTheme(modes[(modes.indexOf(current)+1)%modes.length])
+  });
+  all("[data-theme-choice]").forEach(function(button){button.addEventListener("click",function(){setTheme(button.dataset.themeChoice)})});
+  byId("mainNav").addEventListener("click",function(event){
+    var button=event.target.closest("[data-tab]");
+    if(button&&!button.classList.contains("hidden"))showTab(button.dataset.tab)
+  });
+  byId("productSearch").addEventListener("input",function(){
+    if(state.selectedProduct&&normalizeSku(byId("productSearch").value)!==normalizeSku(state.selectedProduct.codigo)){
+      state.selectedProduct=null;renderSelectedProduct()
+    }
+    renderProductDropdown()
+  });
+  byId("productSearch").addEventListener("keydown",function(event){
+    if(event.key!=="Enter")return;
+    event.preventDefault();
+    var exact=findProduct(event.target.value);
+    var results=productSearchResults(event.target.value);
+    if(exact)selectProduct(exact);
+    else if(results.length===1)selectProduct(results[0]);
+    else renderProductDropdown()
+  });
+  byId("productDropdown").addEventListener("click",function(event){
+    var option=event.target.closest("[data-sku]");
+    if(option){var product=findProduct(option.dataset.sku);if(product)selectProduct(product)}
+  });
+  document.addEventListener("click",function(event){
+    if(!event.target.closest("#productSearch")&&!event.target.closest("#productDropdown"))byId("productDropdown").classList.add("hidden")
+  });
+  byId("countForm").addEventListener("submit",saveCount);
+  byId("copyLastCode").addEventListener("click",function(){if(state.lastRecord)copyCode(state.lastRecord.registroCodigo)});
+  byId("printLastRecord").addEventListener("click",function(){printRecord(state.lastRecord)});
+  ["recordSearch","recordUserFilter","recordStatusFilter"].forEach(function(id){
+    byId(id).addEventListener(id==="recordSearch"?"input":"change",renderRecords)
+  });
+  byId("recordList").addEventListener("click",function(event){
+    var action=event.target.closest("[data-action]");if(!action)return;
+    var record=state.records.find(function(item){return item.id===action.dataset.id});
+    if(action.dataset.action==="print-record")printRecord(record);
+    if(action.dataset.action==="copy-record"&&record)copyCode(record.registroCodigo);
+    if(action.dataset.action==="edit-record")openEditRecord(action.dataset.id);
+    if(action.dataset.action==="annul-record")openAnnulRecord(action.dataset.id);
+    if(action.dataset.action==="history-record")showRecordHistory(action.dataset.id)
+  });
+  byId("clearPreviousRecordsButton").addEventListener("click",openClearPreviousRecords);
+  byId("pendingSearch").addEventListener("input",renderPending);
+  byId("differenceSearch").addEventListener("input",renderDifferences);
+  byId("differenceFilter").addEventListener("change",renderDifferences);
+  byId("exportCsv").addEventListener("click",exportDifferences);
+  byId("printReport").addEventListener("click",printDifferenceReport);
+  byId("auditSearch").addEventListener("input",renderAudit);
+  byId("masterCatalogFile").addEventListener("change",function(event){handleMasterCatalogFile(event.target.files[0])});
+  byId("stockFile").addEventListener("change",function(event){handleStockFile(event.target.files[0])});
+  byId("addProfileButton").addEventListener("click",function(){openProfileModal(null)});
+  byId("userList").addEventListener("click",function(event){
+    var action=event.target.closest("[data-action]");
+    if(action&&action.dataset.action==="edit-profile")openProfileModal(action.dataset.id)
+  });
+  byId("modalClose").addEventListener("click",closeModal);
+  byId("modalOverlay").addEventListener("click",function(event){if(event.target===byId("modalOverlay"))closeModal()});
+  document.addEventListener("keydown",function(event){
+    if(event.key==="Escape"&&!byId("modalOverlay").classList.contains("hidden"))closeModal();
+    if(event.key==="Tab"&&!byId("modalOverlay").classList.contains("hidden")){
+      var focusable=all("#modal button,#modal input,#modal select,#modal textarea").filter(function(node){return !node.disabled});
+      if(!focusable.length)return;
+      var first=focusable[0],last=focusable[focusable.length-1];
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+    }
+  });
+  window.addEventListener("online",function(){state.online=true;syncStatus();renderCountAvailability()});
+  window.addEventListener("offline",function(){state.online=false;syncStatus();renderCountAvailability()});
+  window.addEventListener("afterprint",function(){document.body.classList.remove("printing");clearNode(byId("printArea"))})
+}
+
+applyTheme();
+bindEvents();
+renderAll();
+initializeFirebase();
+</script>
+
+<!--
+REGLAS FIRESTORE RECOMENDADAS PARA ESTA VERSION
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function profile() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid));
+    }
+    function active() {
+      return signedIn() && profile().data.active == true;
+    }
+    function role() {
+      return profile().data.role;
+    }
+    function canCount() {
+      return active() && role() in ['admin', 'supervisor', 'conteador'];
+    }
+    function canReview() {
+      return active() && role() in ['admin', 'supervisor'];
+    }
+    function admin() {
+      return active() && role() == 'admin';
+    }
+
+    match /usuarios/{id} {
+      allow get: if signedIn() && (request.auth.uid == id || admin());
+      allow list: if admin();
+      allow create, update: if admin();
+      allow delete: if false;
+    }
+    match /conteos/{id} {
+      allow read: if active();
+      allow create: if canCount()
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.registroCodigo.matches('^C-[0-9]{4,}$')
+        && request.resource.data.cantidad is int
+        && request.resource.data.cantidad >= 0
+        && request.resource.data.estado == 'activo';
+      allow update: if canReview()
+        && (!('registroCodigo' in resource.data)
+          || request.resource.data.registroCodigo == resource.data.registroCodigo)
+        && request.resource.data.codigo == resource.data.codigo
+        && request.resource.data.usuarioId == resource.data.usuarioId
+        && (!('createdAt' in resource.data)
+          || request.resource.data.createdAt == resource.data.createdAt)
+        && request.resource.data.cantidad is int
+        && request.resource.data.cantidad >= 0
+        && (
+          request.resource.data.estado == resource.data.estado
+          || (request.resource.data.estado == 'anulado' && canReview())
+          || (request.resource.data.estado == 'archivado' && admin())
+        );
+      allow delete: if false;
+    }
+    match /contadores/conteos {
+      allow read: if canCount();
+      allow create: if canCount()
+        && request.resource.data.ultimo is int
+        && request.resource.data.ultimo >= 1;
+      allow update: if canCount()
+        && request.resource.data.ultimo == resource.data.ultimo + 1;
+      allow delete: if false;
+    }
+    match /auditoria/{id} {
+      allow read: if canReview();
+      allow create: if active()
+        && request.resource.data.usuarioId == request.auth.uid;
+      allow update, delete: if false;
+    }
+    match /config/catalogo {
+      allow read: if active();
+      allow write: if admin();
+    }
+    match /config/existencias {
+      allow read: if active();
+      allow write: if admin();
+    }
+    match /catalogo_items/{id} {
+      allow read: if active();
+      allow write: if admin();
+    }
+    match /existencia_items/{id} {
+      allow read: if active();
+      allow write: if admin();
+    }
+    match /catalogo/{id} {
+      allow read: if active();
+      allow write: if admin();
+    }
+    match /catalogo_existencias/{id} {
+      allow read: if active();
+      allow write: if admin();
+    }
+  }
+}
+-->
+</body>
+</html>
