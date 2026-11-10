@@ -1,0 +1,220 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Identidad y permisos ----------
+    function signedIn() {
+      return request.auth != null;
+    }
+    function profile() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+    function active() {
+      return signedIn() && profile().active == true;
+    }
+    function role() {
+      return profile().role;
+    }
+    // Dueño de la plataforma: campo superadmin = true en su documento de usuarios.
+    function superadmin() {
+      return active() && profile().get('superadmin', false) == true;
+    }
+    // Los perfiles anteriores a las empresas pertenecen a la empresa "principal".
+    function myCompany() {
+      return profile().get('empresaId', 'principal');
+    }
+    function sameCompany(eid) {
+      return superadmin() || (active() && myCompany() == eid);
+    }
+    // Suscripción vigente: empresa activa y sin fecha de vencimiento pasada.
+    function vigente(eid) {
+      return superadmin()
+        || !exists(/databases/$(database)/documents/empresas/$(eid))
+        || (get(/databases/$(database)/documents/empresas/$(eid)).data.get('estado', 'activa') == 'activa'
+            && (!('vence' in get(/databases/$(database)/documents/empresas/$(eid)).data)
+                || get(/databases/$(database)/documents/empresas/$(eid)).data.vence == null
+                || get(/databases/$(database)/documents/empresas/$(eid)).data.vence > request.time));
+    }
+    function canCount(eid) {
+      return sameCompany(eid) && vigente(eid) && role() in ['admin', 'supervisor', 'conteador'];
+    }
+    function canReview(eid) {
+      return sameCompany(eid) && vigente(eid) && role() in ['admin', 'supervisor'];
+    }
+    function isAdmin(eid) {
+      return sameCompany(eid) && vigente(eid) && role() == 'admin';
+    }
+
+    // ---------- Tomas ----------
+    function tomaAbiertaRoot(tomaId) {
+      return !exists(/databases/$(database)/documents/tomas/$(tomaId))
+        || get(/databases/$(database)/documents/tomas/$(tomaId)).data.get('estado', 'abierta') != 'cerrada';
+    }
+    function tomaAbiertaEmp(eid, tomaId) {
+      return !exists(/databases/$(database)/documents/empresas/$(eid)/tomas/$(tomaId))
+        || get(/databases/$(database)/documents/empresas/$(eid)/tomas/$(tomaId)).data.get('estado', 'abierta') != 'cerrada';
+    }
+    function tomaCreate(eid) {
+      return canReview(eid)
+        && request.resource.data.estado in ['abierta', 'cerrada'];
+    }
+    // Cerrar lo puede hacer un supervisor; reabrir solo un administrador.
+    function tomaUpdate(eid) {
+      return canReview(eid)
+        && (resource.data.get('estado', 'abierta') != 'cerrada'
+            || request.resource.data.estado == 'cerrada'
+            || isAdmin(eid));
+    }
+
+    // ---------- Registros de conteo ----------
+    function conteoCreate(eid) {
+      return canCount(eid)
+        && request.resource.data.usuarioId == request.auth.uid
+        && request.resource.data.registroCodigo.matches('^C-[0-9]{4,}$')
+        && request.resource.data.cantidad is int
+        && request.resource.data.cantidad >= 0
+        && request.resource.data.estado == 'activo'
+        && request.resource.data.get('tomaId', 'inicial') is string;
+    }
+    function conteoUpdate(eid) {
+      return canReview(eid)
+        && (!('registroCodigo' in resource.data)
+          || request.resource.data.registroCodigo == resource.data.registroCodigo)
+        && request.resource.data.get('tomaId', 'inicial') == resource.data.get('tomaId', 'inicial')
+        && request.resource.data.codigo == resource.data.codigo
+        && request.resource.data.usuarioId == resource.data.usuarioId
+        && (!('createdAt' in resource.data)
+          || request.resource.data.createdAt == resource.data.createdAt)
+        && request.resource.data.cantidad is int
+        && request.resource.data.cantidad >= 0
+        && (
+          request.resource.data.estado == resource.data.estado
+          || (request.resource.data.estado == 'anulado' && canReview(eid))
+          || (request.resource.data.estado == 'archivado' && isAdmin(eid))
+        );
+    }
+    function counterCreate(eid) {
+      return canCount(eid)
+        && request.resource.data.ultimo is int
+        && request.resource.data.ultimo >= 1;
+    }
+    function counterUpdate(eid) {
+      return canCount(eid)
+        && request.resource.data.ultimo == resource.data.ultimo + 1;
+    }
+
+    // ---------- Usuarios (siempre en la raíz, con empresaId) ----------
+    match /usuarios/{id} {
+      allow get: if signedIn() && (
+        request.auth.uid == id
+        || superadmin()
+        || (active() && role() == 'admin'
+            && resource.data.get('empresaId', 'principal') == myCompany())
+      );
+      allow list: if superadmin()
+        || (active() && role() == 'admin'
+            && resource.data.empresaId == myCompany());
+      allow create, update: if superadmin()
+        || (active() && role() == 'admin'
+            && request.resource.data.get('empresaId', 'principal') == myCompany()
+            && request.resource.data.get('superadmin', false) == false
+            && (resource == null
+                || resource.data.get('empresaId', 'principal') == myCompany()));
+      allow delete: if false;
+    }
+
+    // ---------- Empresas y suscripciones ----------
+    match /empresas/{eid} {
+      allow read: if sameCompany(eid);
+      allow write: if superadmin();
+    }
+
+    // ---------- Empresa principal: datos originales en la raíz ----------
+    match /tomas/{id} {
+      allow read: if sameCompany('principal');
+      allow create: if tomaCreate('principal');
+      allow update: if tomaUpdate('principal');
+      allow delete: if false;
+    }
+    match /conteos/{id} {
+      allow read: if sameCompany('principal');
+      allow create: if conteoCreate('principal')
+        && tomaAbiertaRoot(request.resource.data.get('tomaId', 'inicial'));
+      allow update: if conteoUpdate('principal')
+        && tomaAbiertaRoot(resource.data.get('tomaId', 'inicial'));
+      allow delete: if false;
+    }
+    match /contadores/conteos {
+      allow read: if canCount('principal');
+      allow create: if counterCreate('principal');
+      allow update: if counterUpdate('principal');
+      allow delete: if false;
+    }
+    match /auditoria/{id} {
+      allow read: if canReview('principal');
+      allow create: if sameCompany('principal')
+        && request.resource.data.usuarioId == request.auth.uid;
+      allow update, delete: if false;
+    }
+    match /config/{name} {
+      allow read: if sameCompany('principal');
+      allow write: if isAdmin('principal');
+    }
+    match /catalogo_items/{id} {
+      allow read: if sameCompany('principal');
+      allow write: if isAdmin('principal');
+    }
+    match /existencia_items/{id} {
+      allow read: if sameCompany('principal');
+      allow write: if isAdmin('principal');
+    }
+    match /catalogo/{id} {
+      allow read: if sameCompany('principal');
+      allow write: if isAdmin('principal');
+    }
+    match /catalogo_existencias/{id} {
+      allow read: if sameCompany('principal');
+      allow write: if isAdmin('principal');
+    }
+
+    // ---------- Demás empresas: datos separados en empresas/{eid}/... ----------
+    match /empresas/{eid}/tomas/{id} {
+      allow read: if sameCompany(eid);
+      allow create: if tomaCreate(eid);
+      allow update: if tomaUpdate(eid);
+      allow delete: if false;
+    }
+    match /empresas/{eid}/conteos/{id} {
+      allow read: if sameCompany(eid);
+      allow create: if conteoCreate(eid)
+        && tomaAbiertaEmp(eid, request.resource.data.get('tomaId', 'inicial'));
+      allow update: if conteoUpdate(eid)
+        && tomaAbiertaEmp(eid, resource.data.get('tomaId', 'inicial'));
+      allow delete: if false;
+    }
+    match /empresas/{eid}/contadores/conteos {
+      allow read: if canCount(eid);
+      allow create: if counterCreate(eid);
+      allow update: if counterUpdate(eid);
+      allow delete: if false;
+    }
+    match /empresas/{eid}/auditoria/{id} {
+      allow read: if canReview(eid);
+      allow create: if sameCompany(eid)
+        && request.resource.data.usuarioId == request.auth.uid;
+      allow update, delete: if false;
+    }
+    match /empresas/{eid}/config/{name} {
+      allow read: if sameCompany(eid);
+      allow write: if isAdmin(eid);
+    }
+    match /empresas/{eid}/catalogo_items/{id} {
+      allow read: if sameCompany(eid);
+      allow write: if isAdmin(eid);
+    }
+    match /empresas/{eid}/existencia_items/{id} {
+      allow read: if sameCompany(eid);
+      allow write: if isAdmin(eid);
+    }
+  }
+}
